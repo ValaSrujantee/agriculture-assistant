@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriSmart - AI Agriculture & Crop Recommendation Advisor</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col font-sans">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-emerald-900 text-white shadow-lg sticky top-0 z-50 border-b border-emerald-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-emerald-500 text-white p-2 rounded-xl shadow-md">
+                    <i data-lucide="sprout" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight flex items-center gap-2">
+                        AgriSmart <span class="text-xs bg-emerald-700/80 text-emerald-200 px-2.5 py-0.5 rounded-full font-medium tracking-wide">AI & Knowledge Engine</span>
+                    </h1>
+                    <p class="text-xs text-emerald-200">Smart Crop Guidance, Soil Health & Agronomic Decision Support</p>
+                </div>
+            </div>
+
+            <!-- Header Quick Actions -->
+            <div class="hidden md:flex items-center space-x-3">
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-800 text-emerald-100 border border-emerald-700">
+                    <span class="w-2 h-2 mr-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
+                    Decision Rules & ML Active
+                </span>
+                <button onclick="window.print()" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-700 hover:bg-emerald-600 rounded-lg transition-colors">
+                    <i data-lucide="printer" class="w-3.5 h-3.5"></i> Export Report
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="bg-white border-b border-slate-200 shadow-sm sticky top-[61px] z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex space-x-2 sm:space-x-8 overflow-x-auto py-2.5 no-scrollbar">
+                <button onclick="switchTab('recommender')" id="tab-recommender" class="nav-tab active flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-lg text-emerald-700 bg-emerald-50 border border-emerald-200 transition-all">
+                    <i data-lucide="compass" class="w-4 h-4"></i> Crop Recommender
+                </button>
+                <button onclick="switchTab('soil-health')" id="tab-soil-health" class="nav-tab flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:text-emerald-700 hover:bg-slate-100 transition-all">
+                    <i data-lucide="flask-conical" class="w-4 h-4"></i> Soil & Fertilizer Health
+                </button>
+                <button onclick="switchTab('disease-check')" id="tab-disease-check" class="nav-tab flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:text-emerald-700 hover:bg-slate-100 transition-all">
+                    <i data-lucide="stethoscope" class="w-4 h-4"></i> Pest & Disease Doctor
+                </button>
+                <button onclick="switchTab('knowledge-base')" id="tab-knowledge-base" class="nav-tab flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:text-emerald-700 hover:bg-slate-100 transition-all">
+                    <i data-lucide="book-open" class="w-4 h-4"></i> Agri Encyclopedia
+                </button>
+                <button onclick="switchTab('farm-planner')" id="tab-farm-planner" class="nav-tab flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:text-emerald-700 hover:bg-slate-100 transition-all">
+                    <i data-lucide="calendar" class="w-4 h-4"></i> Seasonal Calendar
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+
+        <!-- ======================================================== -->
+        <!-- TAB 1: CROP RECOMMENDER -->
+        <!-- ======================================================== -->
+        <section id="view-recommender" class="tab-view active">
+            <!-- Hero Banner -->
+            <div class="bg-gradient-to-r from-emerald-800 to-teal-900 rounded-2xl p-6 sm:p-8 text-white mb-8 shadow-md relative overflow-hidden">
+                <div class="relative z-10 max-w-3xl">
+                    <div class="inline-flex items-center gap-2 bg-emerald-700/60 px-3 py-1 rounded-full text-xs font-semibold text-emerald-200 mb-3 border border-emerald-600/50">
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-yellow-300"></i> AI Decision Tree & Agronomic Scoring
+                    </div>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">Smart Agricultural Crop Advisor</h2>
+                    <p class="text-emerald-100 text-sm sm:text-base leading-relaxed">
+                        Input your local soil composition, rainfall, temperature, and season. Our multi-variable evaluation engine ranks the best-suited crops with precise yield and management guidelines.
+                    </p>
+                </div>
+                <div class="absolute -right-10 -bottom-10 opacity-15 pointer-events-none">
+                    <i data-lucide="wheat" class="w-72 h-72"></i>
+                </div>
+            </div>
+
+            <!-- Form + Results Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Parameters Form Card -->
+                <div class="lg:col-span-5 bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex items-center justify-between pb-4 mb-5 border-b border-slate-100">
+                        <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                            <i data-lucide="sliders" class="w-5 h-5 text-emerald-600"></i> Field & Soil Parameters
+                        </h3>
+                        <button type="button" onclick="loadSamplePreset('monsoon_clay')" class="text-xs text-emerald-700 hover:text-emerald-800 font-semibold bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200 hover:bg-emerald-100 transition-colors">
+                            ⚡ Load Preset
+                        </button>
+                    </div>
+
+                    <form id="recommendForm" onsubmit="handleRecommendationSubmit(event)" class="space-y-4">
+                        <!-- Soil & Season -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Soil Type</label>
+                                <select id="soil_type" class="w-full text-sm rounded-lg border-slate-300 focus:ring-emerald-500 focus:border-emerald-500 p-2.5 border bg-slate-50">
+                                    <option value="Alluvial">Alluvial (River Basin)</option>
+                                    <option value="Black Soil (Regur)">Black Soil (Regur)</option>
+                                    <option value="Sandy Loam">Sandy Loam</option>
+                                    <option value="Clay Loam">Clay Loam</option>
+                                    <option value="Red Soil">Red Soil</option>
+                                    <option value="Laterite">Laterite (Acidic)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Target Season</label>
+                                <select id="season" class="w-full text-sm rounded-lg border-slate-300 focus:ring-emerald-500 focus:border-emerald-500 p-2.5 border bg-slate-50">
+                                    <option value="Kharif">Kharif (Monsoon/Summer)</option>
+                                    <option value="Rabi">Rabi (Winter/Post-monsoon)</option>
+                                    <option value="Zaid">Zaid (Hot Summer/Spring)</option>
+                                    <option value="Annual">Annual / Perennial</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Climate: Temperature & Rainfall -->
+                        <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+                            <div class="flex justify-between items-center">
+                                <label class="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                                    <i data-lucide="thermometer" class="w-4 h-4 text-amber-500"></i> Avg Temperature (°C)
+                                </label>
+                                <span id="temp-val" class="text-xs font-bold bg-white px-2 py-0.5 rounded border border-slate-200 text-slate-800">26 °C</span>
+                            </div>
+                            <input type="range" id="temperature" min="5" max="45" value="26" step="1" oninput="document.getElementById('temp-val').innerText = this.value + ' °C'" class="w-full accent-emerald-600 h-1.5 bg-slate-200 rounded-lg cursor-pointer">
+
+                            <div class="flex justify-between items-center pt-2">
+                                <label class="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                                    <i data-lucide="cloud-rain" class="w-4 h-4 text-blue-500"></i> Annual/Seasonal Rainfall (mm)
+                                </label>
+                                <span id="rain-val" class="text-xs font-bold bg-white px-2 py-0.5 rounded border border-slate-200 text-slate-800">1100 mm</span>
+                            </div>
+                            <input type="range" id="rainfall" min="200" max="3000" value="1100" step="50" oninput="document.getElementById('rain-val').innerText = this.value + ' mm'" class="w-full accent-blue-600 h-1.5 bg-slate-200 rounded-lg cursor-pointer">
+                        </div>
+
+                        <!-- Soil pH -->
+                        <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                            <div class="flex justify-between items-center">
+                                <label class="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                                    <i data-lucide="test-tube" class="w-4 h-4 text-purple-500"></i> Soil pH Level (Acidity / Alkalinity)
+                                </label>
+                                <span id="ph-val" class="text-xs font-bold bg-white px-2 py-0.5 rounded border border-slate-200 text-slate-800">6.5 pH</span>
+                            </div>
+                            <input type="range" id="ph" min="4.0" max="9.0" value="6.5" step="0.1" oninput="document.getElementById('ph-val').innerText = this.value + ' pH'" class="w-full accent-purple-600 h-1.5 bg-slate-200 rounded-lg cursor-pointer">
+                            <div class="flex justify-between text-[10px] text-slate-400">
+                                <span>Acidic (&lt;6)</span>
+                                <span class="font-medium text-emerald-600">Neutral (6.5 - 7.5)</span>
+                                <span>Alkaline (&gt;8)</span>
+                            </div>
+                        </div>
+
+                        <!-- Soil N-P-K Nutrients -->
+                        <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+                            <h4 class="text-xs font-semibold text-slate-700 mb-3 flex items-center gap-1.5">
+                                <i data-lucide="layers" class="w-4 h-4 text-emerald-600"></i> Soil Nutrients (NPK in kg/ha or mg/kg)
+                            </h4>
+                            <div class="grid grid-cols-3 gap-2">
+                                <div>
+                                    <label class="block text-[11px] font-medium text-slate-600 mb-1">Nitrogen (N)</label>
+                                    <input type="number" id="nitrogen" value="80" min="0" max="300" class="w-full text-sm font-semibold rounded-lg border-slate-300 focus:ring-emerald-500 focus:border-emerald-500 p-2 border bg-white text-center">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-medium text-slate-600 mb-1">Phosphorus (P)</label>
+                                    <input type="number" id="phosphorus" value="45" min="0" max="200" class="w-full text-sm font-semibold rounded-lg border-slate-300 focus:ring-emerald-500 focus:border-emerald-500 p-2 border bg-white text-center">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-medium text-slate-600 mb-1">Potassium (K)</label>
+                                    <input type="number" id="potassium" value="50" min="0" max="300" class="w-full text-sm font-semibold rounded-lg border-slate-300 focus:ring-emerald-500 focus:border-emerald-500 p-2 border bg-white text-center">
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 text-sm">
+                            <i data-lucide="zap" class="w-4 h-4"></i> Run Recommendation Model
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Results & Recommendations Column -->
+                <div class="lg:col-span-7 space-y-6">
+                    <!-- Top Match Spotlight Card -->
+                    <div id="topMatchCard" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 transition-all">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full flex items-center gap-1.5">
+                                <i data-lucide="award" class="w-3.5 h-3.5"></i> Optimal Crop Recommendation
+                            </span>
+                            <div id="topMatchScore" class="text-2xl font-black text-emerald-600">--%</div>
+                        </div>
+
+                        <div class="flex items-start gap-4">
+                            <div id="topMatchIcon" class="text-4xl sm:text-5xl bg-emerald-50 p-3 rounded-2xl border border-emerald-100 flex-shrink-0">🌾</div>
+                            <div>
+                                <h3 id="topMatchName" class="text-xl sm:text-2xl font-bold text-slate-900">Rice (Paddy)</h3>
+                                <p id="topMatchCategory" class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Cereal / Grain</p>
+                                <p id="topMatchYield" class="text-xs text-slate-600 mt-1 font-medium">⚡ Expected Yield: 4.5 - 6.5 tonnes / hectare</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5 pt-4 border-t border-slate-100 text-xs">
+                            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                                <div class="font-bold text-slate-700 flex items-center gap-1 mb-1">
+                                    <i data-lucide="droplet" class="w-3.5 h-3.5 text-blue-500"></i> Water Management
+                                </div>
+                                <p id="topMatchWater" class="text-slate-600 text-[11px] leading-relaxed">Requires standing water during early vegetative stages.</p>
+                            </div>
+                            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                                <div class="font-bold text-slate-700 flex items-center gap-1 mb-1">
+                                    <i data-lucide="leaf" class="w-3.5 h-3.5 text-emerald-600"></i> Nutrition & Fertilizer
+                                </div>
+                                <p id="topMatchFertilizer" class="text-slate-600 text-[11px] leading-relaxed">Split Nitrogen doses at basal, tillering and panicle emergence.</p>
+                            </div>
+                        </div>
+
+                        <!-- Match Breakdown Chart -->
+                        <div class="mt-5 pt-4 border-t border-slate-100">
+                            <h4 class="text-xs font-bold text-slate-700 mb-2 flex items-center gap-1.5">
+                                <i data-lucide="bar-chart-2" class="w-3.5 h-3.5 text-emerald-600"></i> Suitability Factors Breakdown
+                            </h4>
+                            <div class="h-44">
+                                <canvas id="breakdownChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ranked Recommendations List -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                        <h3 class="font-bold text-slate-800 text-base mb-4 flex items-center justify-between">
+                            <span class="flex items-center gap-2">
+                                <i data-lucide="list-ordered" class="w-5 h-5 text-emerald-600"></i> Ranked Crop Alternatives
+                            </span>
+                            <span class="text-xs text-slate-500 font-normal">Sorted by Multi-Factor Suitability</span>
+                        </h3>
+                        <div id="rankedCropsList" class="space-y-3">
+                            <!-- Injected by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ======================================================== -->
+        <!-- TAB 2: SOIL & FERTILIZER HEALTH -->
+        <!-- ======================================================== -->
+        <section id="view-soil-health" class="tab-view hidden">
+            <div class="max-w-4xl mx-auto space-y-6">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
+                        <i data-lucide="flask-conical" class="w-5 h-5 text-emerald-600"></i> Soil Nutrient Diagnostics & Fertility Advisor
+                    </h3>
+                    <p class="text-xs text-slate-500 mb-6">Real-time interpretation of Macronutrient (NPK) balances and pH conditioning requirements.</p>
+
+                    <!-- Status Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6" id="soilStatusCards">
+                        <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-xl text-center">
+                            <span class="text-xs font-bold text-emerald-800 uppercase">Nitrogen (N)</span>
+                            <div class="text-2xl font-extrabold text-emerald-700 my-1" id="stat-n">80</div>
+                            <span class="text-xs px-2 py-0.5 bg-emerald-200 text-emerald-800 rounded-full font-semibold" id="badge-n">Optimal</span>
+                        </div>
+                        <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl text-center">
+                            <span class="text-xs font-bold text-blue-800 uppercase">Phosphorus (P)</span>
+                            <div class="text-2xl font-extrabold text-blue-700 my-1" id="stat-p">45</div>
+                            <span class="text-xs px-2 py-0.5 bg-blue-200 text-blue-800 rounded-full font-semibold" id="badge-p">Optimal</span>
+                        </div>
+                        <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl text-center">
+                            <span class="text-xs font-bold text-amber-800 uppercase">Potassium (K)</span>
+                            <div class="text-2xl font-extrabold text-amber-700 my-1" id="stat-k">50</div>
+                            <span class="text-xs px-2 py-0.5 bg-amber-200 text-amber-800 rounded-full font-semibold" id="badge-k">Optimal</span>
+                        </div>
+                        <div class="bg-purple-50 border border-purple-200 p-4 rounded-xl text-center">
+                            <span class="text-xs font-bold text-purple-800 uppercase">Soil pH</span>
+                            <div class="text-2xl font-extrabold text-purple-700 my-1" id="stat-ph">6.5</div>
+                            <span class="text-xs px-2 py-0.5 bg-purple-200 text-purple-800 rounded-full font-semibold" id="badge-ph">Neutral</span>
+                        </div>
+                    </div>
+
+                    <!-- Guidance & Fertilizer Plan -->
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-4">
+                        <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i> Tailored Agronomic Recommendations
+                        </h4>
+                        <div id="fertilizerAdviceList" class="space-y-2 text-xs text-slate-700">
+                            <!-- Injected by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Soil Profile Reference -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+                        <i data-lucide="mountain" class="w-5 h-5 text-emerald-600"></i> Soil Classification Characteristics
+                    </h3>
+                    <div id="soilProfilesGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Injected by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ======================================================== -->
+        <!-- TAB 3: PEST & DISEASE DOCTOR -->
+        <!-- ======================================================== -->
+        <section id="view-disease-check" class="tab-view hidden">
+            <div class="max-w-4xl mx-auto space-y-6">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="bg-rose-100 text-rose-600 p-2.5 rounded-xl">
+                            <i data-lucide="stethoscope" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-900">Crop Health & Disease Diagnostic Advisor</h3>
+                            <p class="text-xs text-slate-500">Identify pests, fungal blights, and leaf pathogens from field symptoms.</p>
+                        </div>
+                    </div>
+
+                    <form onsubmit="handleDiseaseSubmit(event)" class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div class="sm:col-span-1">
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Select Crop</label>
+                                <select id="disease_crop" class="w-full text-sm rounded-lg border-slate-300 focus:ring-emerald-500 focus:border-emerald-500 p-2.5 border bg-slate-50">
+                                    <option value="all">All Crops</option>
+                                    <option value="Rice">Rice (Paddy)</option>
+                                    <option value="Wheat">Wheat</option>
+                                    <option value="Maize">Maize (Corn)</option>
+                                    <option value="Tomato">Tomato</option>
+                                    <option value="Potato">Potato</option>
+                                    <option value="Cotton">Cotton</option>
+                                </select>
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Describe Observed Symptoms / Signs</label>
+                                <input type="text" id="disease_symptoms" placeholder="e.g. yellow rust pustules, spindle spots on leaves, ragged holes in whorl..." class="w-full text-sm rounded-lg border-slate-300 focus:ring-emerald-500 focus:border-emerald-500 p-2.5 border bg-white">
+                            </div>
+                        </div>
+
+                        <!-- Quick symptom pills -->
+                        <div class="flex flex-wrap gap-2 pt-1">
+                            <span class="text-[11px] text-slate-500 font-medium self-center">Quick Presets:</span>
+                            <button type="button" onclick="setSymptomQuery('Rice', 'spindle diamond spots grey center')" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-full transition-colors">🌾 Rice Blast</button>
+                            <button type="button" onclick="setSymptomQuery('Wheat', 'yellow orange rust pustules on leaf')" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-full transition-colors">🌾 Wheat Rust</button>
+                            <button type="button" onclick="setSymptomQuery('Maize', 'ragged holes frass in whorl')" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-full transition-colors">🌽 Fall Armyworm</button>
+                            <button type="button" onclick="setSymptomQuery('Potato', 'water-soaked dark lesions white fuzzy mold')" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-full transition-colors">🥔 Late Blight</button>
+                            <button type="button" onclick="setSymptomQuery('Cotton', 'bored holes flared squares pink caterpillar')" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-full transition-colors">☁️ Pink Bollworm</button>
+                        </div>
+
+                        <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 px-4 rounded-xl shadow transition-all flex items-center justify-center gap-2 text-sm">
+                            <i data-lucide="search" class="w-4 h-4"></i> Run Diagnostic Matcher
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Diagnosis Results Container -->
+                <div id="diagnosisResults" class="space-y-4">
+                    <!-- Injected by JavaScript -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ======================================================== -->
+        <!-- TAB 4: AGRI ENCYCLOPEDIA -->
+        <!-- ======================================================== -->
+        <section id="view-knowledge-base" class="tab-view hidden">
+            <div class="space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900">Curated Crop & Agronomy Encyclopedia</h3>
+                        <p class="text-xs text-slate-500">Comprehensive database of commercial, cereal, pulse, fruit and vegetable crops.</p>
+                    </div>
+                    <div class="w-full sm:w-72">
+                        <div class="relative">
+                            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
+                            <input type="text" id="encyclopediaSearch" oninput="filterEncyclopedia(this.value)" placeholder="Search crops, seasons, soil..." class="w-full pl-9 pr-3 py-2 text-xs rounded-lg border-slate-300 focus:ring-emerald-500 focus:border-emerald-500 border bg-slate-50">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="encyclopediaGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Injected by JavaScript -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ======================================================== -->
+        <!-- TAB 5: SEASONAL CALENDAR -->
+        <!-- ======================================================== -->
+        <section id="view-farm-planner" class="tab-view hidden">
+            <div class="max-w-5xl mx-auto space-y-6">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
+                        <i data-lucide="calendar" class="w-5 h-5 text-emerald-600"></i> Agricultural Cropping Seasons & Farm Activity Schedule
+                    </h3>
+                    <p class="text-xs text-slate-500 mb-6">Standard farming cycles, sowing windows, and harvest management.</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Kharif -->
+                        <div class="border border-emerald-200 bg-emerald-50/50 rounded-2xl p-5 relative overflow-hidden">
+                            <div class="text-xs font-bold uppercase tracking-wider text-emerald-800 mb-1">Monsoon Cycle</div>
+                            <h4 class="text-xl font-black text-emerald-950 mb-2">Kharif Season</h4>
+                            <p class="text-xs text-emerald-800 font-semibold mb-3">📅 Sowing: June - July | Harvest: Sept - Oct</p>
+                            <p class="text-xs text-slate-600 leading-relaxed mb-4">Relies heavily on southwest monsoon rainfall. High humidity and warm temperatures facilitate fast vegetative growth.</p>
+                            <div class="border-t border-emerald-200/60 pt-3">
+                                <span class="text-[11px] font-bold text-emerald-900 block mb-1">Key Crops:</span>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <span class="text-[10px] bg-white border border-emerald-200 px-2 py-0.5 rounded-md font-medium">Rice (Paddy)</span>
+                                    <span class="text-[10px] bg-white border border-emerald-200 px-2 py-0.5 rounded-md font-medium">Cotton</span>
+                                    <span class="text-[10px] bg-white border border-emerald-200 px-2 py-0.5 rounded-md font-medium">Maize</span>
+                                    <span class="text-[10px] bg-white border border-emerald-200 px-2 py-0.5 rounded-md font-medium">Soybean</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Rabi -->
+                        <div class="border border-amber-200 bg-amber-50/50 rounded-2xl p-5 relative overflow-hidden">
+                            <div class="text-xs font-bold uppercase tracking-wider text-amber-800 mb-1">Winter Cycle</div>
+                            <h4 class="text-xl font-black text-amber-950 mb-2">Rabi Season</h4>
+                            <p class="text-xs text-amber-800 font-semibold mb-3">📅 Sowing: Oct - Dec | Harvest: Mar - April</p>
+                            <p class="text-xs text-slate-600 leading-relaxed mb-4">Crops require cool climate during germination and vegetative growth, followed by warm sunshine during ripening.</p>
+                            <div class="border-t border-amber-200/60 pt-3">
+                                <span class="text-[11px] font-bold text-amber-900 block mb-1">Key Crops:</span>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <span class="text-[10px] bg-white border border-amber-200 px-2 py-0.5 rounded-md font-medium">Wheat</span>
+                                    <span class="text-[10px] bg-white border border-amber-200 px-2 py-0.5 rounded-md font-medium">Chickpea (Gram)</span>
+                                    <span class="text-[10px] bg-white border border-amber-200 px-2 py-0.5 rounded-md font-medium">Potato</span>
+                                    <span class="text-[10px] bg-white border border-amber-200 px-2 py-0.5 rounded-md font-medium">Mustard</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Zaid -->
+                        <div class="border border-blue-200 bg-blue-50/50 rounded-2xl p-5 relative overflow-hidden">
+                            <div class="text-xs font-bold uppercase tracking-wider text-blue-800 mb-1">Summer Cycle</div>
+                            <h4 class="text-xl font-black text-blue-950 mb-2">Zaid Season</h4>
+                            <p class="text-xs text-blue-800 font-semibold mb-3">📅 Sowing: Mar - April | Harvest: May - June</p>
+                            <p class="text-xs text-slate-600 leading-relaxed mb-4">Short duration interim season between Rabi and Kharif. Suitable for fast-maturing crops with artificial irrigation.</p>
+                            <div class="border-t border-blue-200/60 pt-3">
+                                <span class="text-[11px] font-bold text-blue-900 block mb-1">Key Crops:</span>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <span class="text-[10px] bg-white border border-blue-200 px-2 py-0.5 rounded-md font-medium">Watermelon</span>
+                                    <span class="text-[10px] bg-white border border-blue-200 px-2 py-0.5 rounded-md font-medium">Muskmelon</span>
+                                    <span class="text-[10px] bg-white border border-blue-200 px-2 py-0.5 rounded-md font-medium">Cucumber</span>
+                                    <span class="text-[10px] bg-white border border-blue-200 px-2 py-0.5 rounded-md font-medium">Fodder</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-6 border-t border-slate-800 text-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+                <i data-lucide="sprout" class="w-4 h-4 text-emerald-400"></i>
+                <span class="text-slate-200 font-semibold">AgriSmart Decision Platform</span> — AI & Agronomy Assistant
+            </div>
+            <p class="text-slate-500">Built for precision farming, soil optimization & crop yield enhancement.</p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
