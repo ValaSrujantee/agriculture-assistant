@@ -139,14 +139,14 @@ def run_server():
     server_address = ("", PORT)
     httpd = HTTPServer(server_address, AgricultureAPIHandler)
     print("=" * 60)
-    print(f"🌱 Smart Agriculture Assistant Server is LIVE!")
-    print(f"🔗 Local Web App URL: http://localhost:{PORT}")
-    print(f"🌾 Knowledge Base Loaded: {len(CROP_DATABASE)} Crops & {len(SOIL_DATABASE)} Soil Profiles")
+    print(f">> Smart Agriculture Assistant Server is LIVE!")
+    print(f">> Local Web App URL: http://localhost:{PORT}")
+    print(f">> Knowledge Base Loaded: {len(CROP_DATABASE)} Crops & {len(SOIL_DATABASE)} Soil Profiles")
     print("=" * 60)
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
-        print("\n🛑 Server shutting down gracefully...")
+        print("\n>> Server shutting down gracefully...")
         httpd.server_close()
 
 
