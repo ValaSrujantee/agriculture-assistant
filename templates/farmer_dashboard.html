@@ -5,7 +5,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script></head>
 <body class="account-page account-app">
   <header class="account-topbar"><nav class="account-nav"><a class="brand-logo" href="/"><span class="brand-icon">🌱</span><span>Smart AgriAssistant</span></a>
-    <div><a href="/farmer-dashboard" class="active">My farms</a><a href="/profile">Profile</a><a href="/dashboard">Farm analysis</a><button class="btn btn-secondary btn-sm" data-logout>Sign out</button></div></nav></header>
+    <div><a href="/farmer-dashboard" class="active">My farms</a><a href="/profile">Profile</a><a href="/dashboard">Farm analysis</a><button class="theme-toggle" id="themeToggleBtn" aria-label="Toggle Theme">🌙</button><button class="btn btn-secondary btn-sm" data-logout>Sign out</button></div></nav></header>
   <main class="container account-content" data-farmer-id="{{ farmer.id }}">
     <section class="account-welcome"><div><span class="badge badge-primary">Farmer dashboard</span><h1>Welcome, {{ farmer.full_name|e }} 👋</h1><p>Manage your farm profiles and review the data saved to your account.</p></div><a class="btn btn-primary" href="/dashboard">🌱 Analyze a farm</a></section>
     <div class="account-summary-grid">
@@ -39,4 +39,4 @@
         <label class="form-label">Previous crop (optional)<input class="form-control" name="previous_crop"></label>
       </div><p class="form-message" id="farmFormMessage" role="alert"></p><div class="modal-actions"><button class="btn btn-secondary" id="cancelFarmBtn" type="button">Cancel</button><button class="btn btn-primary" type="submit">Save farm</button></div></form>
     </section></div>
-  </main><script src="/static/js/accounts.js"></script></body></html>
+  </main><script src="/static/js/main.js"></script><script src="/static/js/accounts.js"></script></body></html>

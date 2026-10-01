@@ -22,6 +22,8 @@
 
   /* Neutrals */
   --bg-main: #f8f9fa;
+  --ambient-green: rgba(82, 183, 136, 0.16);
+  --ambient-gold: rgba(233, 196, 106, 0.12);
   --bg-card: #ffffff;
   --bg-sidebar: #ffffff;
   --bg-subtle: #f1f3f0;
@@ -49,6 +51,8 @@
 
 /* Dark Mode Theme */
 [data-theme="dark"] {
+  --ambient-green: rgba(82, 183, 136, 0.11);
+  --ambient-gold: rgba(233, 196, 106, 0.07);
   --bg-main: #0d1712;
   --bg-card: #15221b;
   --bg-sidebar: #111c16;
@@ -76,13 +80,48 @@
 
 body {
   font-family: var(--font-sans);
-  background-color: var(--bg-main);
+  background-color: transparent;
   color: var(--text-primary);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+/* Slow, theme-aware ambient movement behind page content. */
+html {
+  min-height: 100%;
+  background: var(--bg-main);
+}
+
+body {
+  position: relative;
+  isolation: isolate;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  z-index: -1;
+  inset: -3%;
+  pointer-events: none;
+  background-image:
+    radial-gradient(ellipse at 18% 22%, var(--ambient-green) 0, transparent 48%),
+    radial-gradient(ellipse at 82% 76%, var(--ambient-gold) 0, transparent 44%),
+    linear-gradient(135deg, var(--bg-main), var(--bg-subtle));
+  background-size: 150% 150%;
+  animation: agri-ambient-drift 30s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes agri-ambient-drift {
+  from { transform: translate3d(-0.6%, -0.3%, 0) scale(1); }
+  to { transform: translate3d(0.6%, 0.3%, 0) scale(1.025); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before { animation: none; will-change: auto; }
 }
 
 /* Typography */
