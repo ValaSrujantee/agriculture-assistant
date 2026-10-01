@@ -1,11 +1,26 @@
+# Python bytecode and caches
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-.env
-.venv
-env/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environment
 venv/
-.DS_Store
+env/
+ENV/
+.venv/
+
+# IDE files
 .vscode/
 .idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# SQLite database file if user wants to keep it fresh
+# data/*.db

@@ -1,154 +1,284 @@
 """
-Smart Agriculture Assistant - Web Server & REST API Backend
-Supports both standard Python HTTP server (zero-dependency instant run)
-and FastAPI / ASGI server.
+Flask Application Entrypoint for Smart Agriculture Assistant.
+Serves web dashboard interfaces and clean REST API endpoints for crop recommendations,
+soil health analysis, agricultural knowledge exploration, and historical assessments.
 """
-
 import os
-import sys
 import json
-import urllib.parse
-from http.server import HTTPServer, SimpleHTTPRequestHandler
-from ml_engine import SmartAgriAdvisor
-from knowledge_base import CROP_DATABASE, SOIL_DATABASE
+import datetime
+from flask import Flask, render_template, request, jsonify
 
-advisor = SmartAgriAdvisor()
-PORT = int(os.environ.get("PORT", 8000))
-STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+import config
+from utils.data_processor import DataProcessor, DataValidationError
+from utils.recommendation_engine import RecommendationEngine
+from utils.knowledge_base import KnowledgeBase
+from utils.history_manager import get_history_manager
+from predict import get_predictor, ModelNotFoundError
 
+app = Flask(
+    __name__,
+    template_folder="templates",
+    static_folder="static"
+)
+app.config["SECRET_KEY"] = config.SECRET_KEY
 
-class AgricultureAPIHandler(SimpleHTTPRequestHandler):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, directory=STATIC_DIR, **kwargs)
-
-    def _send_json_response(self, data, status=200):
-        response_bytes = json.dumps(data).encode("utf-8")
-        self.send_response(status)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", str(len(response_bytes)))
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
-        self.end_headers()
-        self.wfile.write(response_bytes)
-
-    def do_OPTIONS(self):
-        self.send_response(200)
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
-        self.end_headers()
-
-    def do_GET(self):
-        parsed_url = urllib.parse.urlparse(self.path)
-        path = parsed_url.path
-
-        if path == "/api/crops":
-            self._send_json_response({"status": "success", "crops": CROP_DATABASE})
-            return
-        elif path == "/api/soils":
-            self._send_json_response({"status": "success", "soils": SOIL_DATABASE})
-            return
-        elif path == "/api/search":
-            query_params = urllib.parse.parse_qs(parsed_url.query)
-            q = query_params.get("q", [""])[0]
-            results = advisor.search_knowledge_base(q)
-            self._send_json_response({"status": "success", "results": results})
-            return
-
-        # Serve static files or index.html
-        if path == "/" or not os.path.exists(os.path.join(STATIC_DIR, path.lstrip("/"))):
-            self.path = "/index.html"
-        return super().do_GET()
-
-    def do_POST(self):
-        parsed_url = urllib.parse.urlparse(self.path)
-        path = parsed_url.path
-        content_length = int(self.headers.get("Content-Length", 0))
-        post_data = self.rfile.read(content_length).decode("utf-8")
-
-        try:
-            body = json.loads(post_data) if post_data else {}
-        except json.JSONDecodeError:
-            self._send_json_response({"error": "Invalid JSON body"}, status=400)
-            return
-
-        if path == "/api/recommend":
-            try:
-                nitrogen = float(body.get("nitrogen", 70))
-                phosphorus = float(body.get("phosphorus", 45))
-                potassium = float(body.get("potassium", 50))
-                temperature = float(body.get("temperature", 25))
-                rainfall = float(body.get("rainfall", 800))
-                ph = float(body.get("ph", 6.5))
-                soil_type = str(body.get("soil_type", "Alluvial"))
-                season = str(body.get("season", "Kharif"))
-
-                recommendations = advisor.evaluate_crop_suitability(
-                    nitrogen=nitrogen,
-                    phosphorus=phosphorus,
-                    potassium=potassium,
-                    temperature=temperature,
-                    rainfall=rainfall,
-                    ph=ph,
-                    soil_type=soil_type,
-                    season=season
-                )
-                soil_analysis = advisor.analyze_soil_health(nitrogen, phosphorus, potassium, ph, soil_type)
-
-                self._send_json_response({
-                    "status": "success",
-                    "inputs": {
-                        "nitrogen": nitrogen,
-                        "phosphorus": phosphorus,
-                        "potassium": potassium,
-                        "temperature": temperature,
-                        "rainfall": rainfall,
-                        "ph": ph,
-                        "soil_type": soil_type,
-                        "season": season
-                    },
-                    "recommendations": recommendations,
-                    "soil_analysis": soil_analysis
-                })
-            except Exception as e:
-                self._send_json_response({"error": str(e)}, status=500)
-            return
-
-        elif path == "/api/diagnose":
-            crop_name = body.get("crop", "all")
-            symptoms = body.get("symptoms", "")
-            diagnosis = advisor.diagnose_crop_issue(crop_name, symptoms)
-            self._send_json_response({"status": "success", "diagnosis": diagnosis})
-            return
-
-        elif path == "/api/soil-analysis":
-            nitrogen = float(body.get("nitrogen", 70))
-            phosphorus = float(body.get("phosphorus", 45))
-            potassium = float(body.get("potassium", 50))
-            ph = float(body.get("ph", 6.5))
-            soil_type = str(body.get("soil_type", "Alluvial"))
-            soil_analysis = advisor.analyze_soil_health(nitrogen, phosphorus, potassium, ph, soil_type)
-            self._send_json_response({"status": "success", "soil_analysis": soil_analysis})
-            return
-
-        self._send_json_response({"error": "Endpoint not found"}, status=404)
+# Initialize Singletons
+knowledge_base = KnowledgeBase()
+recommendation_engine = RecommendationEngine(kb=knowledge_base)
+history_manager = get_history_manager()
 
 
-def run_server():
-    server_address = ("", PORT)
-    httpd = HTTPServer(server_address, AgricultureAPIHandler)
-    print("=" * 60)
-    print(f">> Smart Agriculture Assistant Server is LIVE!")
-    print(f">> Local Web App URL: http://localhost:{PORT}")
-    print(f">> Knowledge Base Loaded: {len(CROP_DATABASE)} Crops & {len(SOIL_DATABASE)} Soil Profiles")
-    print("=" * 60)
+# -----------------------------------------------------------------------------
+# Web Page Routes
+# -----------------------------------------------------------------------------
+
+@app.route("/")
+def index():
+    """Landing Page."""
+    return render_template("index.html")
+
+
+@app.route("/dashboard")
+def dashboard():
+    """Main Farm Analysis Dashboard."""
+    return render_template("dashboard.html")
+
+
+@app.route("/guidance")
+def guidance():
+    """Crop Guidance Encyclopedia and Knowledge Explorer."""
+    return render_template("guidance.html")
+
+
+@app.route("/history")
+def history():
+    """Past Farm Assessment History."""
+    return render_template("history.html")
+
+
+@app.route("/model-performance")
+def model_performance():
+    """ML Model Transparency & Performance Metrics."""
+    return render_template("model_performance.html")
+
+
+# -----------------------------------------------------------------------------
+# REST API Endpoints
+# -----------------------------------------------------------------------------
+
+@app.route("/api/health", methods=["GET"])
+def api_health():
+    """System Health Check."""
+    model_loaded = False
     try:
-        httpd.serve_forever()
-    except KeyboardInterrupt:
-        print("\n>> Server shutting down gracefully...")
-        httpd.server_close()
+        predictor = get_predictor()
+        model_loaded = predictor.is_loaded()
+    except Exception:
+        model_loaded = False
+
+    return jsonify({
+        "status": "healthy",
+        "service": "Smart Agriculture Assistant API",
+        "version": "2.0.0",
+        "model_loaded": model_loaded,
+        "timestamp": datetime.datetime.now().isoformat()
+    }), 200
+
+
+@app.route("/api/sample-farms", methods=["GET"])
+def api_sample_farms():
+    """Provides sample farm demo profiles for quick testing."""
+    try:
+        if os.path.exists(config.SAMPLE_FARMS_PATH):
+            with open(config.SAMPLE_FARMS_PATH, "r", encoding="utf-8") as f:
+                farms = json.load(f)
+            return jsonify({"status": "success", "sample_farms": farms}), 200
+        return jsonify({"status": "error", "message": "Sample farms file not found."}), 404
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/crops", methods=["GET"])
+def api_get_crops():
+    """List and search all crops in knowledge base."""
+    season = request.args.get("season")
+    category = request.args.get("category")
+    query = request.args.get("q")
+
+    if season or category or query:
+        crops = knowledge_base.search_crops(season=season, category=category, query=query)
+        return jsonify({"status": "success", "count": len(crops), "crops": crops}), 200
+    
+    crops_dict = knowledge_base.get_all_crops()
+    crops_list = [{"key": k, **v} for k, v in crops_dict.items()]
+    return jsonify({"status": "success", "count": len(crops_list), "crops": crops_list}), 200
+
+
+@app.route("/api/crop/<crop_name>", methods=["GET"])
+def api_get_crop_detail(crop_name):
+    """Retrieve detailed knowledge profile for a specific crop."""
+    crop = knowledge_base.get_crop(crop_name)
+    if crop:
+        return jsonify({"status": "success", "crop": crop}), 200
+    return jsonify({"status": "error", "message": f"Crop '{crop_name}' not found in knowledge base."}), 404
+
+
+@app.route("/api/predict", methods=["POST"])
+def api_predict():
+    """Quick ML prediction endpoint for top crop recommendation."""
+    try:
+        data = request.get_json(force=True, silent=True)
+        if not data:
+            return jsonify({"status": "error", "message": "Invalid JSON payload."}), 400
+
+        features, season, warnings = DataProcessor.validate_farm_input(data)
+        top_k = int(data.get("top_k", 3))
+
+        predictor = get_predictor()
+        predictions = predictor.predict_top_crops(features, top_k=top_k)
+
+        return jsonify({
+            "status": "success",
+            "top_recommendations": predictions,
+            "inputs": features,
+            "warnings": warnings
+        }), 200
+
+    except DataValidationError as dve:
+        return jsonify({"status": "error", "message": dve.message, "field": dve.field}), 422
+    except ModelNotFoundError as mne:
+        return jsonify({"status": "error", "message": str(mne)}), 503
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Prediction failed: {str(e)}"}), 500
+
+
+@app.route("/api/analyze", methods=["POST"])
+def api_analyze():
+    """
+    Comprehensive Farm Assessment Endpoint:
+    Combines ML prediction, Rule Engine, Soil Health, Environmental Analysis,
+    Explainability Factors, and Curated Agronomic Guidance.
+    Auto-saves to assessment history.
+    """
+    try:
+        data = request.get_json(force=True, silent=True)
+        if not data:
+            return jsonify({"status": "error", "message": "Invalid JSON payload."}), 400
+
+        features, season, warnings = DataProcessor.validate_farm_input(data)
+        farm_name = data.get("farm_name", "My Farm")
+        top_k = int(data.get("top_k", 3))
+
+        # Run unified recommendation engine
+        result = recommendation_engine.generate_full_analysis(
+            features=features,
+            season=season,
+            top_k=top_k
+        )
+        result["warnings"] = warnings
+
+        # Save to database
+        try:
+            record_id = history_manager.save_analysis(result, farm_name=farm_name)
+            result["history_id"] = record_id
+        except Exception as db_err:
+            print(f"Warning: Could not save to history: {db_err}")
+            result["history_id"] = None
+
+        return jsonify({"status": "success", "data": result}), 200
+
+    except DataValidationError as dve:
+        return jsonify({"status": "error", "message": dve.message, "field": dve.field}), 422
+    except ModelNotFoundError as mne:
+        return jsonify({"status": "error", "message": str(mne)}), 503
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Farm analysis failed: {str(e)}"}), 500
+
+
+@app.route("/api/assistant", methods=["POST"])
+def api_assistant():
+    """
+    Curated Agriculture Knowledge Assistant Q&A endpoint.
+    Runs 100% locally and safely using the curated knowledge base without third-party dependencies.
+    """
+    try:
+        data = request.get_json(force=True, silent=True) or {}
+        question = data.get("question", "").strip()
+
+        if not question:
+            return jsonify({
+                "status": "error",
+                "message": "Question cannot be empty."
+            }), 400
+
+        response = knowledge_base.answer_query(question)
+        return jsonify({
+            "status": "success",
+            "question": question,
+            "answer": response["answer"],
+            "matched_crops": response.get("matched_crops", []),
+            "crop_key": response.get("crop_key")
+        }), 200
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Assistant query failed: {str(e)}"}), 500
+
+
+@app.route("/api/history", methods=["GET", "DELETE"])
+def api_history():
+    """Get recent farm assessments or clear history."""
+    if request.method == "DELETE":
+        history_manager.clear_history()
+        return jsonify({"status": "success", "message": "History cleared."}), 200
+
+    limit = int(request.args.get("limit", 20))
+    history_list = history_manager.get_recent_history(limit=limit)
+    return jsonify({"status": "success", "count": len(history_list), "history": history_list}), 200
+
+
+@app.route("/api/history/<int:record_id>", methods=["GET"])
+def api_get_history_detail(record_id):
+    """Retrieve full analysis details of a historical record."""
+    analysis = history_manager.get_analysis_by_id(record_id)
+    if analysis:
+        return jsonify({"status": "success", "analysis": analysis}), 200
+    return jsonify({"status": "error", "message": f"Record #{record_id} not found."}), 404
+
+
+@app.route("/api/model-info", methods=["GET"])
+def api_model_info():
+    """Returns model metadata, performance metrics, and feature importances."""
+    try:
+        if os.path.exists(config.METADATA_PATH):
+            with open(config.METADATA_PATH, "r", encoding="utf-8") as f:
+                meta = json.load(f)
+            return jsonify({"status": "success", "metadata": meta}), 200
+        return jsonify({"status": "error", "message": "Model metadata not found."}), 404
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+# -----------------------------------------------------------------------------
+# Global Error Handlers
+# -----------------------------------------------------------------------------
+
+@app.errorhandler(404)
+def not_found_error(e):
+    if request.path.startswith("/api/"):
+        return jsonify({"status": "error", "message": "API endpoint not found."}), 404
+    return render_template("index.html"), 404
+
+
+@app.errorhandler(500)
+def internal_error(e):
+    if request.path.startswith("/api/"):
+        return jsonify({"status": "error", "message": "Internal server error occurred."}), 500
+    return render_template("index.html"), 500
 
 
 if __name__ == "__main__":
-    run_server()
+    print("=" * 60)
+    print("  SMART AGRICULTURE ASSISTANT - SERVER RUNNING")
+    print(f"  Access web application at: http://127.0.0.1:{config.PORT}")
+    print("=" * 60)
+    app.run(host=config.HOST, port=config.PORT, debug=config.DEBUG, use_reloader=False)

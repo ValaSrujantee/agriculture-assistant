@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Farm Analysis Dashboard | Smart Agriculture Assistant</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="container nav-container">
+      <a href="/" class="brand-logo">
+        <div class="brand-icon">🌱</div>
+        <span>Smart AgriAssistant</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="/" class="nav-link">Home</a></li>
+        <li><a href="/dashboard" class="nav-link active">Analyze Farm</a></li>
+        <li><a href="/guidance" class="nav-link">Crop Knowledge</a></li>
+        <li><a href="/history" class="nav-link">History</a></li>
+        <li><a href="/model-performance" class="nav-link">ML Performance</a></li>
+      </ul>
+      <div class="nav-actions">
+        <button class="theme-toggle" id="themeToggleBtn" aria-label="Toggle Theme">🌙</button>
+        <button class="btn btn-secondary btn-sm" id="printReportBtn">🖨 Print Report</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content Container -->
+  <div class="container" style="padding-top: 2rem; padding-bottom: 4rem;">
+    
+    <!-- Header Banner -->
+    <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <h1 style="font-size: 2.2rem; margin-bottom: 0.25rem;">Farm Condition Analysis</h1>
+        <p>Evaluate soil nutrients, climate parameters, and get explainable crop recommendations.</p>
+      </div>
+
+      <!-- Quick Demo Farm Loader -->
+      <div style="min-width: 260px;">
+        <label style="font-size: 0.82rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.3rem; display: block;">
+          ⚡ Try Sample Data (Demo Farm Presets):
+        </label>
+        <select class="form-control" id="sampleFarmSelect" style="font-size: 0.88rem; padding: 0.5rem 0.75rem;">
+          <option value="">-- Select a Demo Farm Profile --</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Input Form Card -->
+    <div class="card" style="margin-bottom: 2.5rem;">
+      <form id="farmAnalysisForm">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+          <h3 class="card-title"><span class="card-icon">📋</span> Enter Farm Parameters</h3>
+          <span style="font-size: 0.85rem; color: var(--text-muted);">All parameters validated against agronomic boundaries</span>
+        </div>
+
+        <div class="grid-2">
+          <!-- Soil Parameters Group -->
+          <div style="background: var(--bg-subtle); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+            <h4 style="font-size: 1.05rem; margin-bottom: 1rem; color: var(--primary); display: flex; align-items: center; gap: 0.4rem;">
+              🧪 Soil Nutrients & pH
+            </h4>
+
+            <div class="form-group">
+              <label class="form-label" for="inputN">
+                <span>Nitrogen (N)</span>
+                <span class="unit-badge">0 - 250 kg/ha</span>
+              </label>
+              <input type="number" class="form-control" id="inputN" placeholder="e.g. 90" min="0" max="250" step="1" required>
+              <span class="form-range-hint">Key for vegetative canopy and biomass development.</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="inputP">
+                <span>Phosphorus (P)</span>
+                <span class="unit-badge">0 - 200 kg/ha</span>
+              </label>
+              <input type="number" class="form-control" id="inputP" placeholder="e.g. 42" min="0" max="200" step="1" required>
+              <span class="form-range-hint">Vital for root establishment, energy transfer, and flowering.</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="inputK">
+                <span>Potassium (K)</span>
+                <span class="unit-badge">0 - 250 kg/ha</span>
+              </label>
+              <input type="number" class="form-control" id="inputK" placeholder="e.g. 43" min="0" max="250" step="1" required>
+              <span class="form-range-hint">Regulates stomatal conductance, lodging resistance, and fruit quality.</span>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" for="inputPh">
+                <span>Soil pH</span>
+                <span class="unit-badge">3.5 - 9.5 (Default: 6.5)</span>
+              </label>
+              <input type="number" class="form-control" id="inputPh" placeholder="e.g. 6.5" min="3.5" max="9.5" step="0.1" value="6.5">
+              <span class="form-range-hint">Controls nutrient solubility and microbial activity.</span>
+            </div>
+          </div>
+
+          <!-- Environment & Season Group -->
+          <div style="background: var(--bg-subtle); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+            <h4 style="font-size: 1.05rem; margin-bottom: 1rem; color: var(--primary); display: flex; align-items: center; gap: 0.4rem;">
+              🌦 Climate & Seasonal Timing
+            </h4>
+
+            <div class="form-group">
+              <label class="form-label" for="inputTemp">
+                <span>Ambient Temperature</span>
+                <span class="unit-badge">5.0 - 50.0 °C</span>
+              </label>
+              <input type="number" class="form-control" id="inputTemp" placeholder="e.g. 24.5" min="5" max="50" step="0.1" required>
+              <span class="form-range-hint">Average daily growing season temperature.</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="inputHumidity">
+                <span>Relative Humidity</span>
+                <span class="unit-badge">10 - 100 %</span>
+              </label>
+              <input type="number" class="form-control" id="inputHumidity" placeholder="e.g. 82.0" min="10" max="100" step="0.1" required>
+              <span class="form-range-hint">Affects transpiration rate and fungal pest susceptibility.</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="inputRainfall">
+                <span>Rainfall / Water Supply</span>
+                <span class="unit-badge">10 - 500 mm</span>
+              </label>
+              <input type="number" class="form-control" id="inputRainfall" placeholder="e.g. 235.0" min="10" max="500" step="1" required>
+              <span class="form-range-hint">Cumulative precipitation or expected irrigation volume.</span>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" for="inputSeason">
+                <span>Cultivation Season</span>
+                <span class="unit-badge">Crop Calendar Window</span>
+              </label>
+              <select class="form-control" id="inputSeason">
+                <option value="Kharif">Kharif (Monsoon: June - October)</option>
+                <option value="Rabi">Rabi (Winter: October - April)</option>
+                <option value="Zaid">Zaid (Summer: March - June)</option>
+                <option value="All Season">All Season / Perennial</option>
+              </select>
+              <span class="form-range-hint">Determines photoperiod and vernalization suitability.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Optional Farm Name -->
+        <div style="margin-top: 1.25rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 250px;">
+            <input type="text" class="form-control" id="farmName" placeholder="Farm / Field Reference Name (e.g. North Plot - Block A)">
+          </div>
+          <div style="display: flex; gap: 0.75rem;">
+            <button type="button" class="btn btn-secondary" id="resetFormBtn">🔄 Reset</button>
+            <button type="submit" class="btn btn-primary btn-lg" id="analyzeBtn">🌱 Analyze My Farm</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- ====================================================================== -->
+    <!-- RESULTS SECTION (Displayed after analysis) -->
+    <!-- ====================================================================== -->
+    <div id="resultsSection" style="display: none;">
+      
+      <!-- Warnings Container -->
+      <div id="warningsContainer" style="display: none; margin-bottom: 1.5rem; background: var(--warning-light); border: 1.5px solid var(--warning); border-radius: var(--radius-md); padding: 1rem 1.25rem;">
+        <h4 style="color: #b06500; font-size: 0.95rem; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.4rem;">
+          ⚠️ Agronomic Environmental Cautions Detected:
+        </h4>
+        <ul id="warningsList" style="padding-left: 1.25rem; font-size: 0.88rem; color: #663c00;"></ul>
+      </div>
+
+      <!-- Hero Recommendation Card -->
+      <div class="recommendation-hero">
+        <div class="recommendation-badge-top" id="heroConfidenceBadge">Top Model Match</div>
+        <div style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--primary); margin-bottom: 0.35rem;">
+          Primary Crop Recommendation
+        </div>
+        <h2 class="rec-crop-name" id="heroCropName">🌾 Rice</h2>
+        <div class="rec-scientific" id="heroScientific">(Oryza sativa) • Cereal</div>
+        
+        <div class="suitability-gauge">
+          <div>
+            <div style="font-size: 0.78rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted);">Model Suitability Score</div>
+            <div class="gauge-score" id="heroScore">92%</div>
+          </div>
+          <div class="gauge-bar-wrapper">
+            <div class="gauge-bar-fill" id="heroGaugeBar" style="width: 92%;"></div>
+          </div>
+        </div>
+
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem;">
+          <em>Note: Suitability score reflects multivariate alignment computed by the Decision Tree ML classifier and environmental rule validation.</em>
+        </p>
+      </div>
+
+      <!-- Top 3 Recommendations Candidate Grid -->
+      <div style="margin-bottom: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+          <h3 style="font-size: 1.3rem;">Top Ranked Crop Options</h3>
+          <span style="font-size: 0.85rem; color: var(--text-muted);">Click any crop below to view its specific guidance & explainability</span>
+        </div>
+        <div class="top-crops-grid" id="topCandidatesContainer">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- 2-Column: Explainability Checklist & Soil Health -->
+      <div class="grid-2" style="margin-bottom: 2rem;">
+        
+        <!-- "WHY THIS CROP?" Explainable Factor Card -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title"><span class="card-icon">🔍</span> Why <span id="whyCropName">This Crop</span>?</h3>
+            <span class="badge badge-primary">Transparent AI</span>
+          </div>
+          <p style="font-size: 0.88rem; margin-bottom: 1rem;">
+            Agronomic alignment verification between user farm conditions and crop requirements:
+          </p>
+          <ul class="why-list" id="whyFactorsList">
+            <!-- Populated dynamically -->
+          </ul>
+        </div>
+
+        <!-- Soil Health Screening Card -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title"><span class="card-icon">🌱</span> Soil Health Screening</h3>
+            <span class="badge badge-success" id="soilOverallBadge">85/100</span>
+          </div>
+          
+          <div style="margin-bottom: 1rem;">
+            <div style="font-size: 0.85rem; color: var(--text-muted);">Overall Soil Condition:</div>
+            <div style="font-size: 1.4rem; font-weight: 800; color: var(--primary);" id="soilOverallStatus">Good Reserve</div>
+            <p style="font-size: 0.85rem; margin-top: 0.25rem;" id="soilSummaryText">Soil exhibits balanced major macronutrients.</p>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1.25rem;">
+            <div class="soil-metric-card">
+              <div class="soil-metric-name">Nitrogen (N)</div>
+              <div class="soil-metric-val" id="valNitrogen">90 kg/ha</div>
+              <span class="badge badge-success" id="badgeNitrogen"><span id="statusNitrogen">Good</span></span>
+            </div>
+            <div class="soil-metric-card">
+              <div class="soil-metric-name">Phosphorus (P)</div>
+              <div class="soil-metric-val" id="valPhosphorus">42 kg/ha</div>
+              <span class="badge badge-info" id="badgePhosphorus"><span id="statusPhosphorus">Moderate</span></span>
+            </div>
+            <div class="soil-metric-card">
+              <div class="soil-metric-name">Potassium (K)</div>
+              <div class="soil-metric-val" id="valPotassium">43 kg/ha</div>
+              <span class="badge badge-info" id="badgePotassium"><span id="statusPotassium">Moderate</span></span>
+            </div>
+            <div class="soil-metric-card">
+              <div class="soil-metric-name">Soil pH</div>
+              <div class="soil-metric-val" id="valPh">6.5 pH</div>
+              <span class="badge badge-success" id="badgePh"><span id="statusPh">Optimal</span></span>
+            </div>
+          </div>
+
+          <div style="font-size: 0.75rem; color: var(--text-muted);">
+            * Disclaimer: This is a screening indicator and does not replace certified laboratory testing.
+          </div>
+        </div>
+      </div>
+
+      <!-- Visual Analytics Charts Row -->
+      <div class="grid-2" style="margin-bottom: 2.5rem;">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title"><span class="card-icon">📊</span> Crop Suitability Comparison</h3>
+            <span class="badge badge-primary">Model Probabilities</span>
+          </div>
+          <div style="height: 260px; position: relative;">
+            <canvas id="topCropsChart"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title"><span class="card-icon">🕸</span> Soil Nutrient Radar vs Benchmark</h3>
+            <span class="badge badge-info">NPK & pH</span>
+          </div>
+          <div style="height: 260px; position: relative;">
+            <canvas id="soilChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Environmental Conditions Overview Bar -->
+      <div class="card" style="margin-bottom: 2.5rem;">
+        <div class="card-header">
+          <h3 class="card-title"><span class="card-icon">🌦</span> Environmental Conditions Analysis</h3>
+        </div>
+        <div class="grid-3" style="margin: 0.5rem 0 1rem;">
+          <div style="background: var(--bg-subtle); padding: 1rem; border-radius: var(--radius-md); text-align: center;">
+            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">TEMPERATURE</div>
+            <div style="font-size: 1.8rem; font-weight: 800; color: var(--primary);" id="dispTemp">24.5°C</div>
+            <span class="badge badge-success">Optimal Window</span>
+          </div>
+          <div style="background: var(--bg-subtle); padding: 1rem; border-radius: var(--radius-md); text-align: center;">
+            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">RELATIVE HUMIDITY</div>
+            <div style="font-size: 1.8rem; font-weight: 800; color: var(--primary);" id="dispHumidity">82.0%</div>
+            <span class="badge badge-primary">High Humidity</span>
+          </div>
+          <div style="background: var(--bg-subtle); padding: 1rem; border-radius: var(--radius-md); text-align: center;">
+            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">RAINFALL</div>
+            <div style="font-size: 1.8rem; font-weight: 800; color: var(--primary);" id="dispRainfall">235 mm</div>
+            <span class="badge badge-primary">Abundant Water</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Crop-Specific Agricultural Guidance Tabs -->
+      <div class="card" style="margin-bottom: 2.5rem;">
+        <div class="card-header">
+          <h3 class="card-title" id="guidanceCropTitle"><span class="card-icon">📖</span> Agronomic Guidance</h3>
+          <span class="badge badge-primary">Expert Knowledge Base</span>
+        </div>
+
+        <div class="tabs-header">
+          <button class="tab-btn active" data-tab="tabOverview">Overview</button>
+          <button class="tab-btn" data-tab="tabSoil">Soil & Nutrients</button>
+          <button class="tab-btn" data-tab="tabWater">Water & Irrigation</button>
+          <button class="tab-btn" data-tab="tabCultivation">Cultivation & Tips</button>
+          <button class="tab-btn" data-tab="tabMonitoring">Monitoring & Pests</button>
+          <button class="tab-btn" data-tab="tabConcerns">Environmental Concerns</button>
+        </div>
+
+        <div class="tabs-body" style="padding-top: 0.5rem;">
+          <div class="tab-pane active" id="tabOverview">
+            <p id="guideOverview" style="font-size: 0.95rem; line-height: 1.7;"></p>
+          </div>
+          <div class="tab-pane" id="tabSoil">
+            <h4 style="margin-bottom: 0.5rem;">Soil Requirements:</h4>
+            <p id="guideSoil" style="margin-bottom: 1rem;"></p>
+            <h4 style="margin-bottom: 0.5rem;">Nutrient Considerations:</h4>
+            <p id="guideNutrients"></p>
+          </div>
+          <div class="tab-pane" id="tabWater">
+            <h4 style="margin-bottom: 0.5rem;">Water Requirement Category:</h4>
+            <p id="guideWater" style="margin-bottom: 1rem; font-weight: 600; color: var(--primary);"></p>
+            <h4 style="margin-bottom: 0.5rem;">Irrigation Guidance:</h4>
+            <p id="guideIrrigation"></p>
+          </div>
+          <div class="tab-pane" id="tabCultivation">
+            <h4 style="margin-bottom: 0.5rem;">General Cultivation Practices:</h4>
+            <p id="guideCultivation"></p>
+          </div>
+          <div class="tab-pane" id="tabMonitoring">
+            <h4 style="margin-bottom: 0.5rem;">Field Monitoring & Scouting:</h4>
+            <p id="guideMonitoring"></p>
+          </div>
+          <div class="tab-pane" id="tabConcerns">
+            <h4 style="margin-bottom: 0.5rem;">Common Environmental Risks:</h4>
+            <p id="guideConcerns" style="color: var(--danger);"></p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ====================================================================== -->
+    <!-- INTERACTIVE AGRICULTURE ASSISTANT PANEL -->
+    <!-- ====================================================================== -->
+    <div class="card" style="margin-top: 2rem;">
+      <div class="card-header">
+        <h3 class="card-title"><span class="card-icon">💬</span> Smart Agri-Assistant Q&A</h3>
+        <span class="badge badge-info">Curated Offline Engine</span>
+      </div>
+      <p style="font-size: 0.88rem; margin-bottom: 1rem;">
+        Ask questions about crop requirements, irrigation, soil health, or seasonal calendars.
+      </p>
+
+      <div class="prompt-chips">
+        <span class="chip">What crop is suitable for high rainfall?</span>
+        <span class="chip">What soil conditions are suitable for Rice?</span>
+        <span class="chip">What is the recommended season for Wheat?</span>
+        <span class="chip">What crops are best for drought conditions?</span>
+        <span class="chip">What should I consider before choosing a crop?</span>
+      </div>
+
+      <div class="assistant-panel" style="height: 380px;">
+        <div class="assistant-messages" id="assistantMessages">
+          <div class="message-bubble message-bot">
+            👋 Hello! I am your <strong>Smart Agriculture Assistant</strong>. How can I assist you with your farm decisions or crop guidance today?
+          </div>
+        </div>
+        <div class="assistant-input-bar">
+          <input type="text" class="form-control" id="assistantInput" placeholder="Type your agricultural question here...">
+          <button class="btn btn-primary" id="assistantSendBtn">Send</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="disclaimer-box">
+        <strong>Agronomic Disclaimer:</strong> This application provides informational decision support based on available data and curated knowledge. It does not guarantee harvest yield or replace certified soil testing.
+      </div>
+      <div class="footer-content">
+        <div>
+          <strong>Smart Agriculture Assistant</strong> &copy; 2026. Built with Python, Flask, scikit-learn & Chart.js.
+        </div>
+        <div style="display: flex; gap: 1.25rem;">
+          <a href="/">Home</a>
+          <a href="/guidance">Crop Knowledge</a>
+          <a href="/history">History</a>
+          <a href="/model-performance">ML Performance</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/static/js/main.js"></script>
+  <script src="/static/js/charts.js"></script>
+  <script src="/static/js/dashboard.js"></script>
+  <script src="/static/js/assistant.js"></script>
+</body>
+</html>

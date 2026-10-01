@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Agriculture Assistant | AI & Agronomic Decision Support</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="container nav-container">
+      <a href="/" class="brand-logo">
+        <div class="brand-icon">🌱</div>
+        <span>Smart AgriAssistant</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="/" class="nav-link active">Home</a></li>
+        <li><a href="/dashboard" class="nav-link">Analyze Farm</a></li>
+        <li><a href="/guidance" class="nav-link">Crop Knowledge</a></li>
+        <li><a href="/history" class="nav-link">History</a></li>
+        <li><a href="/model-performance" class="nav-link">ML Performance</a></li>
+      </ul>
+      <div class="nav-actions">
+        <button class="theme-toggle" id="themeToggleBtn" aria-label="Toggle Theme">🌙</button>
+        <a href="/dashboard" class="btn btn-primary btn-sm">Analyze Farm</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="container">
+      <div class="hero-badge">🌾 AI-Powered Agricultural Decision Support</div>
+      <h1 class="hero-title">
+        Grow Smarter. <span class="gradient-text">Choose Better.</span>
+      </h1>
+      <p class="hero-subtitle">
+        AI-assisted crop recommendations powered by soil nutrients (N-P-K), rainfall,
+        temperature, humidity, seasonal timelines, and an expert-curated agricultural knowledge base.
+      </p>
+      <div class="hero-cta-group">
+        <a href="/dashboard" class="btn btn-primary btn-lg">🚀 Analyze My Farm</a>
+        <a href="/guidance" class="btn btn-secondary btn-lg">📖 Explore Crop Knowledge</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works Section -->
+  <section style="padding: 3.5rem 0; background: var(--bg-card); border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">
+    <div class="container">
+      <div style="text-align: center; max-width: 600px; margin: 0 auto 2.5rem;">
+        <span class="badge badge-primary">Process Workflow</span>
+        <h2 style="font-size: 2rem; margin-top: 0.5rem;">How Smart AgriAssistant Works</h2>
+        <p>Combining calibrated machine learning with transparent agronomic rules.</p>
+      </div>
+
+      <div class="grid-4">
+        <div class="card" style="text-align: center;">
+          <div style="font-size: 2.2rem; margin-bottom: 0.75rem;">🧪</div>
+          <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">1. Soil & Nutrients</h3>
+          <p style="font-size: 0.9rem;">Input Nitrogen, Phosphorus, Potassium values and soil pH level.</p>
+        </div>
+        <div class="card" style="text-align: center;">
+          <div style="font-size: 2.2rem; margin-bottom: 0.75rem;">🌦</div>
+          <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">2. Climate & Season</h3>
+          <p style="font-size: 0.9rem;">Provide ambient temperature, relative humidity, rainfall, and crop season.</p>
+        </div>
+        <div class="card" style="text-align: center;">
+          <div style="font-size: 2.2rem; margin-bottom: 0.75rem;">🤖</div>
+          <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">3. Decision Tree Model</h3>
+          <p style="font-size: 0.9rem;">Trained ML engine computes Top-3 ranked suitable crops with confidence scores.</p>
+        </div>
+        <div class="card" style="text-align: center;">
+          <div style="font-size: 2.2rem; margin-bottom: 0.75rem;">📋</div>
+          <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">4. Explainable Guidance</h3>
+          <p style="font-size: 0.9rem;">Receive "Why This Crop?" breakdowns, soil health analysis, and irrigation tips.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Core Features Grid -->
+  <section style="padding: 4rem 0;">
+    <div class="container">
+      <div style="text-align: center; max-width: 650px; margin: 0 auto 3rem;">
+        <span class="badge badge-primary">Comprehensive Capabilities</span>
+        <h2 style="font-size: 2.2rem; margin-top: 0.5rem;">Built for Modern Agronomy</h2>
+        <p>Designed for farmers, agricultural students, extension workers, and researchers.</p>
+      </div>
+
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-icon">🌾</div>
+          <h3 style="font-size: 1.25rem; margin: 0.75rem 0 0.5rem;">Top-3 Crop Recommendations</h3>
+          <p>Never restricts the farmer to a single option. Provides primary and alternative crop candidates with model suitability scores.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">🔍</div>
+          <h3 style="font-size: 1.25rem; margin: 0.75rem 0 0.5rem;">Transparent Explainability</h3>
+          <p>Explains precisely why each crop was recommended using climate-crop compatibility metrics and seasonal alignment.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">🌱</div>
+          <h3 style="font-size: 1.25rem; margin: 0.75rem 0 0.5rem;">Soil Health Screening</h3>
+          <p>Automated evaluation of Nitrogen, Phosphorus, Potassium, and pH with Low/Moderate/Good/High benchmark classifications.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">📚</div>
+          <h3 style="font-size: 1.25rem; margin: 0.75rem 0 0.5rem;">Curated Knowledge Base</h3>
+          <p>Structured agronomic encyclopedia covering 20+ crops with irrigation rules, nutrient needs, and disease monitoring tips.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">💬</div>
+          <h3 style="font-size: 1.25rem; margin: 0.75rem 0 0.5rem;">Smart Agri-Assistant</h3>
+          <p>Ask instant questions about water requirements, suitable sowing seasons, and soil types with 100% offline knowledge retrieval.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">📊</div>
+          <h3 style="font-size: 1.25rem; margin: 0.75rem 0 0.5rem;">Assessment History</h3>
+          <p>Automatically records farm assessments in a local database for trend analysis, comparison, and print-ready report export.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Technical Separation Architecture -->
+  <section style="padding: 3.5rem 0; background: var(--bg-card); border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">
+    <div class="container">
+      <div style="text-align: center; max-width: 700px; margin: 0 auto 2.5rem;">
+        <span class="badge badge-primary">Technical Rigor</span>
+        <h2 style="font-size: 2rem; margin-top: 0.5rem;">Logical Separation of Concerns</h2>
+        <p>A maintainable, scientifically grounded 4-tier decision-support architecture.</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h4 style="color: var(--primary); margin-bottom: 0.5rem;">1. Machine Learning Engine</h4>
+          <p style="margin-bottom: 0.75rem;"><strong>Role:</strong> "Which crop is predicted?"</p>
+          <p style="font-size: 0.9rem;">Trained Decision Tree Classifier evaluates multivariate non-linear agronomic boundaries (N, P, K, Temp, Humidity, pH, Rainfall) to rank candidate crops.</p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--primary); margin-bottom: 0.5rem;">2. Agronomic Rule Engine</h4>
+          <p style="margin-bottom: 0.75rem;"><strong>Role:</strong> "Are conditions suitable or concerning?"</p>
+          <p style="font-size: 0.9rem;">Evaluates soil nutrient thresholds, warns on extreme drought, excessive rainfall, thermal stress, and seasonal incompatibilities.</p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--primary); margin-bottom: 0.5rem;">3. Curated Knowledge Base</h4>
+          <p style="margin-bottom: 0.75rem;"><strong>Role:</strong> "What agricultural guidance should be shown?"</p>
+          <p style="font-size: 0.9rem;">Provides actionable advice on water management, irrigation stages, fertilizer schedules, and pest scouting without unscientific claims.</p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--primary); margin-bottom: 0.5rem;">4. Interactive SaaS Dashboard</h4>
+          <p style="margin-bottom: 0.75rem;"><strong>Role:</strong> "How should the information be presented?"</p>
+          <p style="font-size: 0.9rem;">Responsive UI with Chart.js analytics, dark mode support, demo farm presets, and printable advisory summaries.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section style="padding: 4.5rem 0; text-align: center;">
+    <div class="container">
+      <div class="card" style="max-width: 800px; margin: 0 auto; background: linear-gradient(135deg, rgba(45, 106, 79, 0.08), rgba(82, 183, 136, 0.15)); border: 1.5px solid var(--secondary); padding: 3rem 2rem;">
+        <h2 style="font-size: 2.2rem; margin-bottom: 0.75rem;">Ready to Optimize Your Crop Yield?</h2>
+        <p style="max-width: 550px; margin: 0 auto 1.75rem;">Analyze your farm parameters in seconds with zero configuration or explore realistic demo profiles.</p>
+        <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+          <a href="/dashboard" class="btn btn-primary btn-lg">Start Farm Assessment</a>
+          <a href="/model-performance" class="btn btn-secondary btn-lg">View Model Metrics</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Disclaimer Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="disclaimer-box">
+        <strong>Agronomic Disclaimer:</strong> This application provides informational decision support based on available data, machine-learning models, and a curated knowledge base. It does not replace professional agronomic advice, certified laboratory soil testing, local meteorological forecasts, or regional agricultural extension recommendations. No crop yield or commercial profit is guaranteed.
+      </div>
+      <div class="footer-content">
+        <div>
+          <strong>Smart Agriculture Assistant</strong> &copy; 2026. Built with Python, Flask, scikit-learn & Chart.js.
+        </div>
+        <div style="display: flex; gap: 1.25rem;">
+          <a href="/dashboard">Dashboard</a>
+          <a href="/guidance">Crop Knowledge</a>
+          <a href="/history">History</a>
+          <a href="/model-performance">ML Transparency</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/static/js/main.js"></script>
+</body>
+</html>

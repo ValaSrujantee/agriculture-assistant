@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ML Performance & Model Transparency | Smart Agriculture Assistant</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="container nav-container">
+      <a href="/" class="brand-logo">
+        <div class="brand-icon">🌱</div>
+        <span>Smart AgriAssistant</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="/" class="nav-link">Home</a></li>
+        <li><a href="/dashboard" class="nav-link">Analyze Farm</a></li>
+        <li><a href="/guidance" class="nav-link">Crop Knowledge</a></li>
+        <li><a href="/history" class="nav-link">History</a></li>
+        <li><a href="/model-performance" class="nav-link active">ML Performance</a></li>
+      </ul>
+      <div class="nav-actions">
+        <button class="theme-toggle" id="themeToggleBtn" aria-label="Toggle Theme">🌙</button>
+        <a href="/dashboard" class="btn btn-primary btn-sm">Analyze Farm</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Container -->
+  <div class="container" style="padding-top: 2.5rem; padding-bottom: 4rem;">
+    <div style="margin-bottom: 2rem;">
+      <span class="badge badge-primary">Model Transparency</span>
+      <h1 style="font-size: 2.2rem; margin-top: 0.5rem; margin-bottom: 0.25rem;">Machine Learning Architecture & Metrics</h1>
+      <p>Transparent evaluation of the Decision Tree crop recommendation model, validation scores, and feature importances.</p>
+    </div>
+
+    <!-- Metrics Cards Grid -->
+    <div class="grid-4" style="margin-bottom: 2rem;">
+      <div class="card" style="text-align: center;">
+        <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">TEST ACCURACY (DECISION TREE)</div>
+        <div style="font-size: 2.2rem; font-weight: 800; color: var(--primary);" id="metaDtAccuracy">--%</div>
+        <span class="badge badge-success">Primary Model</span>
+      </div>
+
+      <div class="card" style="text-align: center;">
+        <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">WEIGHTED F1 SCORE</div>
+        <div style="font-size: 2.2rem; font-weight: 800; color: var(--primary);" id="metaDtF1">--%</div>
+        <span class="badge badge-success">Class Balanced</span>
+      </div>
+
+      <div class="card" style="text-align: center;">
+        <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">5-FOLD CROSS VALIDATION</div>
+        <div style="font-size: 2.2rem; font-weight: 800; color: var(--info);" id="metaCvAccuracy">--%</div>
+        <span class="badge badge-info">Robust Generalization</span>
+      </div>
+
+      <div class="card" style="text-align: center;">
+        <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">BENCHMARK RANDOM FOREST</div>
+        <div style="font-size: 2.2rem; font-weight: 800; color: var(--secondary);" id="metaRfAccuracy">--%</div>
+        <span class="badge badge-primary">Ensemble Baseline</span>
+      </div>
+    </div>
+
+    <!-- 2-Column: Feature Importance Chart & Model Specs -->
+    <div class="grid-2" style="margin-bottom: 2.5rem;">
+      
+      <!-- Feature Importances Chart -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title"><span class="card-icon">📊</span> Relative Feature Importances</h3>
+          <span class="badge badge-primary">Gini Impurity Metric</span>
+        </div>
+        <p style="font-size: 0.85rem; margin-bottom: 1rem;">
+          Shows the mathematical influence of each environmental parameter in the decision splits.
+        </p>
+        <div style="height: 300px; position: relative;">
+          <canvas id="featureImportanceChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Training & Architecture Specs -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title"><span class="card-icon">⚙️</span> Model Specifications</h3>
+          <span class="badge badge-info">Scikit-Learn</span>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+          <tr style="border-bottom: 1px solid var(--border-color);">
+            <td style="padding: 0.6rem 0; font-weight: 600;">Algorithm:</td>
+            <td style="padding: 0.6rem 0;" id="specAlgo">Decision Tree Classifier (CART)</td>
+          </tr>
+          <tr style="border-bottom: 1px solid var(--border-color);">
+            <td style="padding: 0.6rem 0; font-weight: 600;">Total Dataset Samples:</td>
+            <td style="padding: 0.6rem 0;" id="specTotalSamples">--</td>
+          </tr>
+          <tr style="border-bottom: 1px solid var(--border-color);">
+            <td style="padding: 0.6rem 0; font-weight: 600;">Train / Test Split:</td>
+            <td style="padding: 0.6rem 0;" id="specSplit">80% Train / 20% Test (Stratified)</td>
+          </tr>
+          <tr style="border-bottom: 1px solid var(--border-color);">
+            <td style="padding: 0.6rem 0; font-weight: 600;">Target Output Classes:</td>
+            <td style="padding: 0.6rem 0;" id="specNumClasses">-- Crops</td>
+          </tr>
+          <tr style="border-bottom: 1px solid var(--border-color);">
+            <td style="padding: 0.6rem 0; font-weight: 600;">Max Depth:</td>
+            <td style="padding: 0.6rem 0;" id="specMaxDepth">15 levels</td>
+          </tr>
+          <tr style="border-bottom: 1px solid var(--border-color);">
+            <td style="padding: 0.6rem 0; font-weight: 600;">Splitting Criterion:</td>
+            <td style="padding: 0.6rem 0;">Gini Impurity</td>
+          </tr>
+          <tr>
+            <td style="padding: 0.6rem 0; font-weight: 600;">Last Retrained:</td>
+            <td style="padding: 0.6rem 0; font-size: 0.85rem; color: var(--text-muted);" id="specTrainedAt">--</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Model Retraining Guidance -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><span class="card-icon">🔄</span> Retraining the ML Model</h3>
+      </div>
+      <p style="font-size: 0.92rem; line-height: 1.6; margin-bottom: 1rem;">
+        The system provides a standalone CLI script to retrain the Decision Tree model on new agronomic datasets.
+      </p>
+      <div style="background: var(--bg-subtle); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.88rem; margin-bottom: 1rem;">
+        # Run the training script from the project root:<br>
+        python train_model.py
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-muted);">
+        The script automatically re-evaluates accuracy, computes feature importances, saves the serialized model (<code>crop_model.pkl</code>), and updates this metadata page.
+      </p>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div>
+          <strong>Smart Agriculture Assistant</strong> &copy; 2026. Model Transparency.
+        </div>
+        <div style="display: flex; gap: 1.25rem;">
+          <a href="/">Home</a>
+          <a href="/dashboard">Analyze Farm</a>
+          <a href="/guidance">Crop Knowledge</a>
+          <a href="/history">History</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/static/js/main.js"></script>
+  <script src="/static/js/charts.js"></script>
+  <script>
+    async function loadModelMetadata() {
+      try {
+        const res = await fetch("/api/model-info");
+        const json = await res.json();
+        if (json.status === "success" && json.metadata) {
+          const meta = json.metadata;
+          const m = meta.metrics || {};
+
+          document.getElementById("metaDtAccuracy").textContent = `${(m.test_accuracy * 100).toFixed(1)}%`;
+          document.getElementById("metaDtF1").textContent = `${(m.test_f1_score * 100).toFixed(1)}%`;
+          document.getElementById("metaCvAccuracy").textContent = `${(m.cv_accuracy_mean * 100).toFixed(1)}%`;
+          document.getElementById("metaRfAccuracy").textContent = `${(m.benchmark_rf_accuracy * 100).toFixed(1)}%`;
+
+          document.getElementById("specTotalSamples").textContent = `${meta.total_samples} samples (${meta.train_samples} train / ${meta.test_samples} test)`;
+          document.getElementById("specNumClasses").textContent = `${meta.classes?.length || 0} Distinct Crops`;
+          document.getElementById("specTrainedAt").textContent = meta.trained_at ? new Date(meta.trained_at).toLocaleString() : "Recently";
+          document.getElementById("specMaxDepth").textContent = `${meta.parameters?.max_depth || 15} levels`;
+
+          if (meta.feature_importances) {
+            renderFeatureImportanceChart("featureImportanceChart", meta.feature_importances);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load model metadata:", err);
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", loadModelMetadata);
+  </script>
+</body>
+</html>

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crop Knowledge Base | Smart Agriculture Assistant</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="container nav-container">
+      <a href="/" class="brand-logo">
+        <div class="brand-icon">🌱</div>
+        <span>Smart AgriAssistant</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="/" class="nav-link">Home</a></li>
+        <li><a href="/dashboard" class="nav-link">Analyze Farm</a></li>
+        <li><a href="/guidance" class="nav-link active">Crop Knowledge</a></li>
+        <li><a href="/history" class="nav-link">History</a></li>
+        <li><a href="/model-performance" class="nav-link">ML Performance</a></li>
+      </ul>
+      <div class="nav-actions">
+        <button class="theme-toggle" id="themeToggleBtn" aria-label="Toggle Theme">🌙</button>
+        <a href="/dashboard" class="btn btn-primary btn-sm">Analyze Farm</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Header Banner -->
+  <div class="container" style="padding-top: 2.5rem; padding-bottom: 4rem;">
+    <div style="margin-bottom: 2rem;">
+      <span class="badge badge-primary">Curated Agronomic Encyclopedia</span>
+      <h1 style="font-size: 2.2rem; margin-top: 0.5rem; margin-bottom: 0.5rem;">Agricultural Knowledge Explorer</h1>
+      <p>Detailed agronomic requirements, soil preferences, irrigation schedules, and cultivation tips for major crops.</p>
+    </div>
+
+    <!-- Search & Filter Controls -->
+    <div class="card" style="margin-bottom: 2rem;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; align-items: flex-end;">
+        <div>
+          <label class="form-label" for="cropSearch">Search Crop</label>
+          <input type="text" class="form-control" id="cropSearch" placeholder="e.g. Rice, Wheat, Cotton...">
+        </div>
+        <div>
+          <label class="form-label" for="categoryFilter">Crop Category</label>
+          <select class="form-control" id="categoryFilter">
+            <option value="All">All Categories</option>
+            <option value="Cereal">Cereal / Grain</option>
+            <option value="Pulse">Pulse / Legume</option>
+            <option value="Commercial">Commercial / Cash</option>
+            <option value="Oilseed">Oilseed</option>
+            <option value="Horticultural">Horticultural / Fruit / Veg</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label" for="seasonFilter">Sowing Season</label>
+          <select class="form-control" id="seasonFilter">
+            <option value="All">All Seasons</option>
+            <option value="Kharif">Kharif</option>
+            <option value="Rabi">Rabi</option>
+            <option value="Zaid">Zaid</option>
+            <option value="All Season">All Season / Perennial</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Crop Cards Grid -->
+    <div class="grid-3" id="cropsGridContainer">
+      <!-- Populated dynamically via JS -->
+    </div>
+
+    <!-- Detail Modal -->
+    <div id="cropDetailModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 1.5rem;">
+      <div class="card" style="max-width: 750px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative;">
+        <button id="closeModalBtn" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+        <div id="modalContent">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div>
+          <strong>Smart Agriculture Assistant</strong> &copy; 2026. Curated Agronomic Knowledge Base.
+        </div>
+        <div style="display: flex; gap: 1.25rem;">
+          <a href="/">Home</a>
+          <a href="/dashboard">Analyze Farm</a>
+          <a href="/history">History</a>
+          <a href="/model-performance">ML Performance</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/static/js/main.js"></script>
+  <script>
+    let allCrops = [];
+
+    async function loadCrops() {
+      try {
+        const res = await fetch("/api/crops");
+        const json = await res.json();
+        if (json.status === "success") {
+          allCrops = json.crops;
+          renderCrops(allCrops);
+        }
+      } catch (err) {
+        console.error("Failed to load crops:", err);
+      }
+    }
+
+    function renderCrops(crops) {
+      const container = document.getElementById("cropsGridContainer");
+      container.innerHTML = "";
+
+      if (crops.length === 0) {
+        container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);">No crops found matching your filters.</div>`;
+        return;
+      }
+
+      crops.forEach(c => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.style.display = "flex";
+        card.style.flexDirection = "column";
+        card.style.justifyContent = "space-between";
+
+        const tempOpt = c.temperature_range?.optimal || "N/A";
+        const rainOpt = c.rainfall_range?.optimal || "N/A";
+
+        card.innerHTML = `
+          <div>
+            <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">${c.icon || '🌱'}</div>
+            <h3 style="font-size: 1.3rem; margin-bottom: 0.25rem;">${c.name}</h3>
+            <div style="font-size: 0.85rem; font-style: italic; color: var(--text-muted); margin-bottom: 0.75rem;">
+              ${c.scientific_name || ''} • <span style="color: var(--primary); font-weight: 600;">${c.category}</span>
+            </div>
+            <p style="font-size: 0.9rem; margin-bottom: 1rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+              ${c.overview}
+            </p>
+            <div style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+              <strong>Optimal Temp:</strong> ${tempOpt}
+            </div>
+            <div style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+              <strong>Water:</strong> ${c.water_requirement}
+            </div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="openCropModal('${c.key}')" style="width: 100%; margin-top: 1rem;">
+            View Detailed Guidance →
+          </button>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function openCropModal(cropKey) {
+      const crop = allCrops.find(c => c.key === cropKey);
+      if (!crop) return;
+
+      const modal = document.getElementById("cropDetailModal");
+      const content = document.getElementById("modalContent");
+
+      content.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+          <span style="font-size: 2.5rem;">${crop.icon || '🌾'}</span>
+          <div>
+            <h2 style="font-size: 1.8rem; margin: 0;">${crop.name}</h2>
+            <div style="font-size: 0.9rem; color: var(--text-muted); font-style: italic;">
+              ${crop.scientific_name} • ${crop.category}
+            </div>
+          </div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 1rem 0;">
+
+        <p style="font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.25rem;">${crop.overview}</p>
+
+        <div class="grid-2" style="margin-bottom: 1.25rem;">
+          <div style="background: var(--bg-subtle); padding: 0.85rem; border-radius: var(--radius-md);">
+            <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">SUITABLE SEASONS</div>
+            <div style="font-weight: 700; color: var(--primary);">${(crop.suitable_seasons || []).join(", ")}</div>
+          </div>
+          <div style="background: var(--bg-subtle); padding: 0.85rem; border-radius: var(--radius-md);">
+            <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">WATER REQUIREMENT</div>
+            <div style="font-weight: 700; color: var(--primary);">${crop.water_requirement}</div>
+          </div>
+        </div>
+
+        <h4 style="color: var(--primary); margin-bottom: 0.4rem;">🌱 Suitable Soil Conditions</h4>
+        <p style="font-size: 0.9rem; margin-bottom: 1rem;">${crop.suitable_soil}</p>
+
+        <h4 style="color: var(--primary); margin-bottom: 0.4rem;">🧪 Nutrient Considerations</h4>
+        <p style="font-size: 0.9rem; margin-bottom: 1rem;">${crop.general_nutrient_considerations}</p>
+
+        <h4 style="color: var(--primary); margin-bottom: 0.4rem;">💧 Irrigation Guidance</h4>
+        <p style="font-size: 0.9rem; margin-bottom: 1rem;">${crop.irrigation_guidance}</p>
+
+        <h4 style="color: var(--primary); margin-bottom: 0.4rem;">🌾 General Cultivation Tips</h4>
+        <p style="font-size: 0.9rem; margin-bottom: 1rem;">${crop.general_cultivation_tips}</p>
+
+        <h4 style="color: var(--primary); margin-bottom: 0.4rem;">🔍 Field Monitoring & Scouting</h4>
+        <p style="font-size: 0.9rem; margin-bottom: 1rem;">${crop.monitoring_tips}</p>
+
+        <h4 style="color: var(--danger); margin-bottom: 0.4rem;">⚠️ Common Environmental Concerns</h4>
+        <p style="font-size: 0.9rem; margin-bottom: 1rem; color: var(--danger);">${crop.common_environmental_concerns}</p>
+
+        <div class="disclaimer-box" style="margin-bottom: 0;">
+          <strong>Informational Guidance:</strong> ${crop.disclaimer || 'Consult local agronomic extension experts for site-specific planting schedules.'}
+        </div>
+      `;
+
+      modal.style.display = "flex";
+    }
+
+    document.getElementById("closeModalBtn").onclick = () => {
+      document.getElementById("cropDetailModal").style.display = "none";
+    };
+
+    window.onclick = (e) => {
+      const modal = document.getElementById("cropDetailModal");
+      if (e.target === modal) modal.style.display = "none";
+    };
+
+    function filterCrops() {
+      const q = document.getElementById("cropSearch").value.toLowerCase().trim();
+      const cat = document.getElementById("categoryFilter").value;
+      const sea = document.getElementById("seasonFilter").value;
+
+      const filtered = allCrops.filter(c => {
+        let match = true;
+        if (q && !c.name.toLowerCase().includes(q) && !c.overview.toLowerCase().includes(q)) match = false;
+        if (cat !== "All" && !c.category.toLowerCase().includes(cat.toLowerCase())) match = false;
+        if (sea !== "All" && !c.suitable_seasons?.includes(sea) && !c.suitable_seasons?.includes("All Season")) match = false;
+        return match;
+      });
+
+      renderCrops(filtered);
+    }
+
+    document.getElementById("cropSearch").addEventListener("input", filterCrops);
+    document.getElementById("categoryFilter").addEventListener("change", filterCrops);
+    document.getElementById("seasonFilter").addEventListener("change", filterCrops);
+
+    document.addEventListener("DOMContentLoaded", loadCrops);
+  </script>
+</body>
+</html>

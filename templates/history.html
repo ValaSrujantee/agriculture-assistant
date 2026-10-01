@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Farm Assessment History | Smart Agriculture Assistant</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="container nav-container">
+      <a href="/" class="brand-logo">
+        <div class="brand-icon">🌱</div>
+        <span>Smart AgriAssistant</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="/" class="nav-link">Home</a></li>
+        <li><a href="/dashboard" class="nav-link">Analyze Farm</a></li>
+        <li><a href="/guidance" class="nav-link">Crop Knowledge</a></li>
+        <li><a href="/history" class="nav-link active">History</a></li>
+        <li><a href="/model-performance" class="nav-link">ML Performance</a></li>
+      </ul>
+      <div class="nav-actions">
+        <button class="theme-toggle" id="themeToggleBtn" aria-label="Toggle Theme">🌙</button>
+        <a href="/dashboard" class="btn btn-primary btn-sm">New Assessment</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Container -->
+  <div class="container" style="padding-top: 2.5rem; padding-bottom: 4rem;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <span class="badge badge-primary">Assessment Logs</span>
+        <h1 style="font-size: 2.2rem; margin-top: 0.5rem; margin-bottom: 0.25rem;">Farm Analysis History</h1>
+        <p>Review past soil evaluations, climate inputs, and generated crop recommendations.</p>
+      </div>
+      <div>
+        <button class="btn btn-secondary btn-sm" id="clearHistoryBtn" style="color: var(--danger); border-color: var(--danger);">
+          🗑 Clear All History
+        </button>
+      </div>
+    </div>
+
+    <!-- History Table Card -->
+    <div class="card" style="overflow-x: auto; padding: 1rem;">
+      <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.92rem;">
+        <thead>
+          <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">
+            <th style="padding: 0.75rem 1rem;">Date & Time</th>
+            <th style="padding: 0.75rem 1rem;">Farm / Field</th>
+            <th style="padding: 0.75rem 1rem;">Season</th>
+            <th style="padding: 0.75rem 1rem;">N-P-K (kg/ha)</th>
+            <th style="padding: 0.75rem 1rem;">Temp / Rain</th>
+            <th style="padding: 0.75rem 1rem;">Top Recommended Crop</th>
+            <th style="padding: 0.75rem 1rem;">Suitability</th>
+            <th style="padding: 0.75rem 1rem; text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody id="historyTableBody">
+          <!-- Populated dynamically via JS -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Historical Detail Modal -->
+    <div id="historyDetailModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 1.5rem;">
+      <div class="card" style="max-width: 650px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative;">
+        <button id="closeHistModalBtn" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+        <div id="histModalContent">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div>
+          <strong>Smart Agriculture Assistant</strong> &copy; 2026. Farm Assessment Logs.
+        </div>
+        <div style="display: flex; gap: 1.25rem;">
+          <a href="/">Home</a>
+          <a href="/dashboard">Analyze Farm</a>
+          <a href="/guidance">Crop Knowledge</a>
+          <a href="/model-performance">ML Performance</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/static/js/main.js"></script>
+  <script>
+    async function loadHistory() {
+      const tbody = document.getElementById("historyTableBody");
+      try {
+        const res = await fetch("/api/history");
+        const json = await res.json();
+        
+        if (json.status === "success" && json.history && json.history.length > 0) {
+          tbody.innerHTML = "";
+          json.history.forEach(item => {
+            const tr = document.createElement("tr");
+            tr.style.borderBottom = "1px solid var(--border-color)";
+            tr.innerHTML = `
+              <td style="padding: 0.85rem 1rem; font-size: 0.85rem; color: var(--text-muted);">${item.timestamp}</td>
+              <td style="padding: 0.85rem 1rem; font-weight: 600;">${item.farm_name || 'My Farm'}</td>
+              <td style="padding: 0.85rem 1rem;"><span class="badge badge-primary">${item.season || 'All Season'}</span></td>
+              <td style="padding: 0.85rem 1rem; font-family: var(--font-mono); font-size: 0.85rem;">${item.n_val}-${item.p_val}-${item.k_val}</td>
+              <td style="padding: 0.85rem 1rem;">${item.temp}°C / ${item.rainfall}mm</td>
+              <td style="padding: 0.85rem 1rem; font-weight: 700; color: var(--primary);">${item.top_crop}</td>
+              <td style="padding: 0.85rem 1rem;"><span class="badge badge-success">${item.top_crop_score}%</span></td>
+              <td style="padding: 0.85rem 1rem; text-align: right;">
+                <button class="btn btn-secondary btn-sm" onclick="viewHistoryDetail(${item.id})">Details</button>
+              </td>
+            `;
+            tbody.appendChild(tr);
+          });
+        } else {
+          tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 3rem; color: var(--text-muted);">No past farm assessments found. Run an analysis on the dashboard!</td></tr>`;
+        }
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 2rem; color: var(--danger);">Failed to load history.</td></tr>`;
+      }
+    }
+
+    async function viewHistoryDetail(id) {
+      try {
+        const res = await fetch(`/api/history/${id}`);
+        const json = await res.json();
+        if (json.status === "success" && json.analysis) {
+          const a = json.analysis;
+          const modal = document.getElementById("historyDetailModal");
+          const content = document.getElementById("histModalContent");
+
+          const primary = a.primary_recommendation || {};
+          const inputs = a.inputs || {};
+
+          content.innerHTML = `
+            <h3 style="margin-bottom: 0.5rem; color: var(--primary);">Assessment Details (ID #${id})</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Recorded farm environmental and recommendation snapshot.</p>
+            
+            <div class="card" style="background: var(--bg-subtle); padding: 1rem; margin-bottom: 1rem;">
+              <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">RECOMMENDED CROP</div>
+              <div style="font-size: 1.6rem; font-weight: 800; color: var(--primary);">${primary.icon || '🌾'} ${primary.crop_name}</div>
+              <div style="font-size: 0.9rem; color: var(--text-secondary);">Suitability Score: <strong>${primary.suitability_score}%</strong> (${primary.confidence_label})</div>
+            </div>
+
+            <h4 style="margin-bottom: 0.5rem;">Input Parameters:</h4>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; font-size: 0.85rem; margin-bottom: 1rem;">
+              <div><strong>Nitrogen:</strong> ${inputs.N} kg/ha</div>
+              <div><strong>Phosphorus:</strong> ${inputs.P} kg/ha</div>
+              <div><strong>Potassium:</strong> ${inputs.K} kg/ha</div>
+              <div><strong>Temperature:</strong> ${inputs.temperature}°C</div>
+              <div><strong>Humidity:</strong> ${inputs.humidity}%</div>
+              <div><strong>Rainfall:</strong> ${inputs.rainfall} mm</div>
+              <div><strong>pH:</strong> ${inputs.ph}</div>
+              <div><strong>Season:</strong> ${inputs.season}</div>
+            </div>
+
+            <h4 style="margin-bottom: 0.5rem;">Soil Evaluation:</h4>
+            <p style="font-size: 0.88rem; margin-bottom: 1rem;">${a.soil_health?.summary || 'Standard soil conditions.'}</p>
+          `;
+
+          modal.style.display = "flex";
+        }
+      } catch (err) {
+        showToast("Failed to fetch assessment details.", "danger");
+      }
+    }
+
+    document.getElementById("closeHistModalBtn").onclick = () => {
+      document.getElementById("historyDetailModal").style.display = "none";
+    };
+
+    document.getElementById("clearHistoryBtn").onclick = async () => {
+      if (confirm("Are you sure you want to clear all analysis history records?")) {
+        try {
+          const res = await fetch("/api/history", { method: "DELETE" });
+          if (res.ok) {
+            showToast("History cleared successfully.", "info");
+            loadHistory();
+          }
+        } catch (e) {
+          showToast("Failed to clear history.", "danger");
+        }
+      }
+    };
+
+    document.addEventListener("DOMContentLoaded", loadHistory);
+  </script>
+</body>
+</html>
