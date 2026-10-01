@@ -36,7 +36,7 @@ METADATA_PATH = MODEL_DIR / "model_metadata.json"
 
 # Server Configuration
 SECRET_KEY = os.getenv("SECRET_KEY") or secrets.token_hex(32)
-DEBUG = os.getenv("FLASK_DEBUG", "True").lower() in ["true", "1", "yes"]
+DEBUG = os.getenv("FLASK_DEBUG", "False").lower() in ["true", "1", "yes"]
 SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "false").lower() in ["true", "1", "yes"]
 PORT = int(os.getenv("PORT", 5000))
 HOST = os.getenv("HOST", "0.0.0.0")
