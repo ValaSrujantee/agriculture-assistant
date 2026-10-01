@@ -6,13 +6,15 @@ soil health analysis, agricultural knowledge exploration, and historical assessm
 import os
 import json
 import datetime
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session
 
 import config
 from utils.data_processor import DataProcessor, DataValidationError
 from utils.recommendation_engine import RecommendationEngine
 from utils.knowledge_base import KnowledgeBase
 from utils.history_manager import get_history_manager
+from utils.farm_data_manager import FarmDataManager, SOURCE_LABELS
+from utils.account_routes import account_bp, accounts
 from predict import get_predictor, ModelNotFoundError
 
 app = Flask(
@@ -21,6 +23,11 @@ app = Flask(
     static_folder="static"
 )
 app.config["SECRET_KEY"] = config.SECRET_KEY
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = config.SESSION_COOKIE_SECURE
+app.config["MAX_CONTENT_LENGTH"] = 8 * 1024 * 1024
+app.register_blueprint(account_bp)
 
 # Initialize Singletons
 knowledge_base = KnowledgeBase()
@@ -41,7 +48,8 @@ def index():
 @app.route("/dashboard")
 def dashboard():
     """Main Farm Analysis Dashboard."""
-    return render_template("dashboard.html")
+    farmer = accounts.get_farmer(session.get("farmer_id")) if session.get("farmer_id") else None
+    return render_template("dashboard.html", farmer=farmer)
 
 
 @app.route("/guidance")
@@ -165,8 +173,20 @@ def api_analyze():
         if not data:
             return jsonify({"status": "error", "message": "Invalid JSON payload."}), 400
 
-        features, season, warnings = DataProcessor.validate_farm_input(data)
-        farm_name = data.get("farm_name", "My Farm")
+        if data.get("require_complete"):
+            prepared = FarmDataManager.prepare_analysis(data, data.get("sources", {}))
+            features, season, warnings = prepared["features"], prepared["season"], prepared["warnings"]
+        else:
+            prepared = None
+            features, season, warnings = DataProcessor.validate_farm_input(data)
+        farmer_id = session.get("farmer_id")
+        farm_id = data.get("farm_id")
+        farm = None
+        if farm_id:
+            if not farmer_id or not accounts.get_farm(int(farmer_id), int(farm_id)):
+                return jsonify({"status": "error", "message": "Farm not found for this account."}), 404
+            farm = accounts.get_farm(int(farmer_id), int(farm_id))
+        farm_name = data.get("farm_name") or (farm["name"] if farm else "My Farm")
         top_k = int(data.get("top_k", 3))
 
         # Run unified recommendation engine
@@ -176,10 +196,21 @@ def api_analyze():
             top_k=top_k
         )
         result["warnings"] = warnings
+        data_sources = {}
+        if prepared:
+            result["data_sources"] = prepared["sources"]
+            result["collected_measurements"] = prepared["measurements"]
+            data_sources = prepared["sources"]
 
         # Save to database
         try:
-            record_id = history_manager.save_analysis(result, farm_name=farm_name)
+            record_id = history_manager.save_analysis(
+                result, farm_name=farm_name, farmer_id=int(farmer_id) if farmer_id else None,
+                farm_id=int(farm_id) if farm_id else None, data_sources=data_sources,
+                report_uploaded=bool(data.get("report_id")),
+                sensor_used=any(source in {"Soil Sensor", "Demo Data"} for source in data_sources.values()),
+                weather_mode="automatic" if "Weather Service" in data_sources.values() else "manual",
+                farm_location=(str(data.get("farm_location") or "").strip()[:160] or None))
             result["history_id"] = record_id
         except Exception as db_err:
             print(f"Warning: Could not save to history: {db_err}")
@@ -227,19 +258,20 @@ def api_assistant():
 @app.route("/api/history", methods=["GET", "DELETE"])
 def api_history():
     """Get recent farm assessments or clear history."""
+    farmer_id = session.get("farmer_id")
     if request.method == "DELETE":
-        history_manager.clear_history()
+        history_manager.clear_history(farmer_id=farmer_id)
         return jsonify({"status": "success", "message": "History cleared."}), 200
 
     limit = int(request.args.get("limit", 20))
-    history_list = history_manager.get_recent_history(limit=limit)
+    history_list = history_manager.get_recent_history(limit=limit, farmer_id=farmer_id)
     return jsonify({"status": "success", "count": len(history_list), "history": history_list}), 200
 
 
 @app.route("/api/history/<int:record_id>", methods=["GET"])
 def api_get_history_detail(record_id):
     """Retrieve full analysis details of a historical record."""
-    analysis = history_manager.get_analysis_by_id(record_id)
+    analysis = history_manager.get_analysis_by_id(record_id, farmer_id=session.get("farmer_id"))
     if analysis:
         return jsonify({"status": "success", "analysis": analysis}), 200
     return jsonify({"status": "error", "message": f"Record #{record_id} not found."}), 404

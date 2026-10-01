@@ -6,11 +6,19 @@
 
 let currentAnalysisData = null;
 let sampleFarmsCache = [];
+const farmSources = {N:"manual", P:"manual", K:"manual", ph:"manual", temperature:"manual", humidity:"manual", rainfall:"manual", soil_temperature:"manual", soil_moisture:"manual"};
+let selectedFarmId = null;
+let verifiedReportId = null;
+let latestSensorValues = {};
+let settingCollectedValues = false;
 
 document.addEventListener("DOMContentLoaded", () => {
   initSampleFarms();
   setupFormHandlers();
   setupTabHandlers();
+  setupFarmDataCollection();
+  loadAccountFarms();
+  updateSourceTable();
 });
 
 /**
@@ -53,6 +61,8 @@ function loadSampleFarm(index) {
   document.getElementById("inputPh").value = farm.ph;
   document.getElementById("inputRainfall").value = farm.rainfall;
   document.getElementById("inputSeason").value = farm.season;
+  ["N", "P", "K", "ph", "temperature", "humidity", "rainfall"].forEach(field => farmSources[field] = "demo");
+  updateSourceTable();
 
   showToast(`Loaded sample profile: ${farm.name}`, "success");
 }
@@ -74,6 +84,12 @@ function setupFormHandlers() {
     resetBtn.addEventListener("click", () => {
       form.reset();
       document.getElementById("resultsSection").style.display = "none";
+      document.getElementById("soilReportReview").hidden = true;
+      document.getElementById("soilReportFile").value = "";
+      verifiedReportId = null;
+      Object.keys(farmSources).forEach(field => farmSources[field] = "manual");
+      verifiedReportId = null;
+      updateSourceTable();
       showToast("Form cleared.", "info");
     });
   }
@@ -88,6 +104,192 @@ function setupFormHandlers() {
       await runFarmAnalysis();
     });
   }
+}
+
+function optionalNumber(id) {
+  const raw = document.getElementById(id)?.value;
+  return raw === undefined || raw === "" ? null : Number(raw);
+}
+
+function collectedFormValues() {
+  return {
+    N: optionalNumber("inputN"), P: optionalNumber("inputP"), K: optionalNumber("inputK"),
+    ph: optionalNumber("inputPh"), temperature: optionalNumber("inputTemp"),
+    humidity: optionalNumber("inputHumidity"), rainfall: optionalNumber("inputRainfall"),
+    soil_temperature: optionalNumber("inputSoilTemp"), soil_moisture: optionalNumber("inputSoilMoisture"),
+    season: document.getElementById("inputSeason").value
+  };
+}
+
+function updateSourceTable() {
+  const body = document.getElementById("farmDataSources");
+  if (!body) return;
+  const values = collectedFormValues();
+  const details = [
+    ["Nitrogen", "N", "kg/ha"], ["Phosphorus", "P", "kg/ha"], ["Potassium", "K", "kg/ha"],
+    ["Soil pH", "ph", ""], ["Soil temperature", "soil_temperature", "°C"],
+    ["Soil moisture", "soil_moisture", "%"], ["Air temperature", "temperature", "°C"],
+    ["Humidity", "humidity", "%"], ["Rainfall", "rainfall", "mm"]
+  ];
+  body.replaceChildren();
+  details.forEach(([label, field, unit]) => {
+    const row = document.createElement("tr");
+    const shownValue = Number.isFinite(values[field]) ? `${values[field]}${unit ? ` ${unit}` : ""}` : "Not provided";
+    const source = ({manual:"Manual", soil_report:"Soil Test Report", soil_sensor:"Soil Sensor", weather_service:"Weather Service", demo:"Demo Data"})[farmSources[field]] || "Manual";
+    [label, shownValue, source].forEach(text => { const cell = document.createElement("td"); cell.textContent = text; row.append(cell); });
+    body.append(row);
+  });
+  const required = [["Nitrogen","N"],["Phosphorus","P"],["Potassium","K"],["Soil pH","ph"],["Air temperature","temperature"],["Humidity","humidity"],["Rainfall","rainfall"]];
+  const missing = required.filter(([,field]) => !Number.isFinite(values[field])).map(([label]) => label);
+  const completeness = document.getElementById("farmDataCompleteness");
+  if (completeness) completeness.textContent = missing.length ? `${Math.round((required.length - missing.length) * 100 / required.length)}% complete. Missing: ${missing.join(", ")}.` : "All required values are present. Check ranges and source labels before analysis.";
+}
+
+async function updateReadiness() {
+  const status = document.getElementById("farmDataCompleteness");
+  const values = collectedFormValues();
+  try {
+    const response = await fetch("/api/farm-data/validate", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({...values, sources:farmSources})});
+    const result = await response.json();
+    if (!response.ok || result.status !== "success") { status.textContent = result.message || "Check each value and try again."; return; }
+    if (result.valid) {
+      const warning = (result.warnings || []).length ? ` ${result.warnings.join(" ")}` : "";
+      status.textContent = `All required data is ready (${result.completeness}%). Sources are shown below.${warning}`;
+    } else {
+      const names = {N:"Nitrogen",P:"Phosphorus",K:"Potassium",ph:"Soil pH",temperature:"Air temperature",humidity:"Humidity",rainfall:"Rainfall"};
+      const missing = (result.missing || []).map(field => names[field] || field);
+      status.textContent = `${result.completeness}% complete. Missing: ${missing.join(", ") || result.message}`;
+    }
+  } catch (_) { status.textContent = "Farm data status could not be checked. You can still review the required fields below."; }
+}
+
+function setupFarmDataCollection() {
+  const fieldInputs = {inputN:"N", inputP:"P", inputK:"K", inputPh:"ph", inputTemp:"temperature", inputHumidity:"humidity", inputRainfall:"rainfall", inputSoilTemp:"soil_temperature", inputSoilMoisture:"soil_moisture"};
+  Object.entries(fieldInputs).forEach(([id, field]) => document.getElementById(id)?.addEventListener("input", () => {
+    if (!settingCollectedValues) farmSources[field] = "manual";
+    updateSourceTable();
+  }));
+  document.getElementById("checkFarmDataBtn")?.addEventListener("click", updateReadiness);
+
+  document.getElementById("uploadSoilReportBtn")?.addEventListener("click", uploadSoilReport);
+  document.getElementById("verifySoilValuesBtn")?.addEventListener("click", verifySoilReport);
+  document.getElementById("sendSensorBtn")?.addEventListener("click", () => submitSensorReading(false));
+  document.getElementById("simulateSensorBtn")?.addEventListener("click", () => submitSensorReading(true));
+  document.getElementById("loadWeatherBtn")?.addEventListener("click", loadFarmWeather);
+}
+
+async function loadAccountFarms() {
+  const wrapper = document.getElementById("accountFarmPickerWrap");
+  const select = document.getElementById("accountFarmSelect");
+  if (!wrapper || !select) return;
+  try {
+    const response = await fetch("/api/farms");
+    if (!response.ok) return;
+    const data = await response.json();
+    wrapper.hidden = false;
+    data.farms.forEach(farm => {
+      const option = document.createElement("option"); option.value = farm.id; option.textContent = farm.name; select.append(option);
+    });
+    const requested = new URLSearchParams(location.search).get("farm_id");
+    if (requested && data.farms.some(farm => String(farm.id) === requested)) select.value = requested;
+    select.addEventListener("change", () => {
+      selectedFarmId = select.value || null;
+      const farm = data.farms.find(item => String(item.id) === String(selectedFarmId));
+      if (farm) {
+        document.getElementById("farmName").value = farm.name;
+        document.getElementById("farmLocationInput").value = farm.location || [farm.village, farm.district, farm.state].filter(Boolean).join(", ");
+      }
+    });
+    select.dispatchEvent(new Event("change"));
+  } catch (_) { /* Public analysis remains available without an account. */ }
+}
+
+async function uploadSoilReport() {
+  const fileInput = document.getElementById("soilReportFile");
+  const message = document.getElementById("soilReportMessage");
+  if (!fileInput.files.length) { message.textContent = "Choose a report file first."; return; }
+  const form = new FormData(); form.append("report", fileInput.files[0]);
+  if (selectedFarmId) form.append("farm_id", selectedFarmId);
+  message.textContent = "Reading report…";
+  try {
+    const response = await fetch("/api/soil-report/upload", {method:"POST", body:form});
+    const result = await response.json();
+    if (!response.ok || result.status !== "success") throw new Error(result.message || "Report upload failed.");
+    verifiedReportId = result.report_id;
+    const reportFields = {N:"reportN", P:"reportP", K:"reportK", ph:"reportPh"};
+    Object.entries(reportFields).forEach(([field,id]) => {
+      const extracted = result.values[field];
+      document.getElementById(id).value = extracted?.value ?? "";
+      const confidence = extracted?.status === "detected" ? "detected" : "not confidently detected; enter manually";
+      document.getElementById(id).setAttribute("aria-label", `${field}: ${confidence}`);
+    });
+    document.getElementById("soilReportReview").hidden = false;
+    message.textContent = `${result.filename}: detected values are editable. Review and press Verify Soil Values.`;
+    updateSourceTable();
+  } catch (error) { message.textContent = error.message; }
+}
+
+async function verifySoilReport() {
+  const message = document.getElementById("soilReportMessage");
+  if (!verifiedReportId) { message.textContent = "Upload a report before verifying values."; return; }
+  const values = {N:optionalNumber("reportN"), P:optionalNumber("reportP"), K:optionalNumber("reportK"), ph:optionalNumber("reportPh")};
+  try {
+    const response = await fetch(`/api/soil-reports/${verifiedReportId}/verify`, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({values})});
+    const result = await response.json();
+    if (!response.ok || result.status !== "success") throw new Error(result.message || "Could not verify report values.");
+    const destinations = {N:"inputN", P:"inputP", K:"inputK", ph:"inputPh"};
+    settingCollectedValues = true;
+    Object.entries(destinations).forEach(([field,id]) => {
+      if (values[field] !== null) { document.getElementById(id).value = values[field]; farmSources[field] = "soil_report"; }
+    });
+    settingCollectedValues = false;
+    message.textContent = "Values verified. Any missing report value still needs a manual entry before analysis.";
+    updateSourceTable(); updateReadiness();
+  } catch (error) { settingCollectedValues = false; message.textContent = error.message; }
+}
+
+async function submitSensorReading(simulate) {
+  const message = document.getElementById("sensorMessage");
+  const body = {device_id:document.getElementById("sensorDeviceId").value.trim(), farm_id:selectedFarmId ? Number(selectedFarmId) : null};
+  if (!simulate) {
+    body.soil_temperature = optionalNumber("sensorSoilTemp");
+    body.soil_moisture = optionalNumber("sensorMoisture");
+    body.ph = optionalNumber("sensorPh");
+  }
+  try {
+    const response = await fetch(simulate ? "/api/sensor-data/simulate" : "/api/sensor-data", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
+    const result = await response.json();
+    if (!response.ok || result.status !== "success") throw new Error(result.message || "Sensor reading could not be saved.");
+    const reading = result.reading;
+    latestSensorValues = reading;
+    settingCollectedValues = true;
+    if (Number.isFinite(reading.ph)) { document.getElementById("inputPh").value = reading.ph; farmSources.ph = simulate ? "demo" : "soil_sensor"; }
+    if (Number.isFinite(reading.soil_temperature)) { document.getElementById("inputSoilTemp").value = reading.soil_temperature; farmSources.soil_temperature = simulate ? "demo" : "soil_sensor"; }
+    if (Number.isFinite(reading.soil_moisture)) { document.getElementById("inputSoilMoisture").value = reading.soil_moisture; farmSources.soil_moisture = simulate ? "demo" : "soil_sensor"; }
+    settingCollectedValues = false;
+    message.textContent = simulate ? "Demo/Simulated reading saved and labelled as demo data." : `Reading received from ${body.device_id}.`;
+    updateSourceTable(); updateReadiness();
+  } catch (error) { settingCollectedValues = false; message.textContent = error.message; }
+}
+
+async function loadFarmWeather() {
+  const message = document.getElementById("weatherMessage");
+  const locationValue = document.getElementById("farmLocationInput").value.trim();
+  if (!locationValue) { message.textContent = "Enter or select a farm location first."; return; }
+  message.textContent = "Requesting weather for this location…";
+  try {
+    const response = await fetch("/api/weather-data", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({location:locationValue, farm_id:selectedFarmId ? Number(selectedFarmId) : null})});
+    const result = await response.json();
+    if (!response.ok || result.status !== "success") throw new Error(result.message || "Weather is unavailable.");
+    const weather = result.weather;
+    settingCollectedValues = true;
+    [["temperature","inputTemp"],["humidity","inputHumidity"],["rainfall","inputRainfall"]].forEach(([field,id]) => {
+      if (Number.isFinite(weather[field])) { document.getElementById(id).value = weather[field]; farmSources[field] = "weather_service"; }
+    });
+    settingCollectedValues = false;
+    message.textContent = "Weather data loaded from the configured provider. Check the rainfall period against crop-season needs.";
+    updateSourceTable(); updateReadiness();
+  } catch (error) { settingCollectedValues = false; message.textContent = error.message; }
 }
 
 /**
@@ -105,17 +307,26 @@ async function runFarmAnalysis() {
     K: parseFloat(document.getElementById("inputK").value),
     temperature: parseFloat(document.getElementById("inputTemp").value),
     humidity: parseFloat(document.getElementById("inputHumidity").value),
-    ph: parseFloat(document.getElementById("inputPh").value) || 6.5,
+    ph: optionalNumber("inputPh"),
+    soil_temperature: optionalNumber("inputSoilTemp"),
+    soil_moisture: optionalNumber("inputSoilMoisture"),
     rainfall: parseFloat(document.getElementById("inputRainfall").value),
     season: document.getElementById("inputSeason").value,
-    top_k: 3
+    top_k: 3,
+    require_complete: true,
+    sources: {...farmSources},
+    farm_id: selectedFarmId ? Number(selectedFarmId) : null,
+    farm_location: document.getElementById("farmLocationInput")?.value.trim() || null,
+    report_id: verifiedReportId
   };
 
   // Client-side quick checks
-  if (isNaN(payload.N) || isNaN(payload.P) || isNaN(payload.K) || isNaN(payload.temperature) || isNaN(payload.humidity) || isNaN(payload.rainfall)) {
-    showToast("Please fill in all required numerical fields.", "warning");
+  const missing = [["Nitrogen",payload.N],["Phosphorus",payload.P],["Potassium",payload.K],["Soil pH",payload.ph],["Air temperature",payload.temperature],["Humidity",payload.humidity],["Rainfall",payload.rainfall]].filter(([,value]) => !Number.isFinite(value)).map(([name]) => name);
+  if (missing.length) {
+    showToast(`Farm data missing: ${missing.join(", ")}. Enter these values or use a report/weather source.`, "warning");
     return;
   }
+  updateReadiness();
 
   try {
     submitBtn.disabled = true;

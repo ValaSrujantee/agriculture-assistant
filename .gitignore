@@ -22,5 +22,7 @@ ENV/
 .DS_Store
 Thumbs.db
 
-# SQLite database file if user wants to keep it fresh
-# data/*.db
+# Local farm history and farmer/account records are private runtime data.
+data/*.db
+.env
+data/soil_reports/

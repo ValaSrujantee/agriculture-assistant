@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Farmer Sign In | Smart Agriculture Assistant</title>
+  <link rel="stylesheet" href="/static/css/style.css"><link rel="stylesheet" href="/static/css/accounts.css">
+</head>
+<body class="account-page">
+  <main class="account-shell">
+    <a class="brand-logo" href="/"><span class="brand-icon">🌱</span><span>Smart AgriAssistant</span></a>
+    <section class="card account-card">
+      <span class="badge badge-primary">Farmer account</span><h1>Welcome back</h1>
+      <p>Sign in to see your farms and saved assessments.</p>
+      <form id="loginForm">
+        <label class="form-label" for="loginIdentifier">Mobile number or email</label>
+        <input class="form-control" id="loginIdentifier" name="identifier" autocomplete="username" required>
+        <label class="form-label" for="loginPassword">Password</label>
+        <input class="form-control" id="loginPassword" name="password" type="password" autocomplete="current-password" required>
+        <p class="form-message" id="formMessage" role="alert" aria-live="polite"></p>
+        <button class="btn btn-primary btn-lg" type="submit">Sign in</button>
+      </form>
+      <p class="account-switch">New here? <a href="/register">Create a farmer account</a></p>
+      <a href="/dashboard" class="account-secondary">Continue to public farm analysis</a>
+    </section>
+  </main>
+  <script src="/static/js/accounts.js"></script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Farmer Profile | Smart Agriculture Assistant</title><link rel="stylesheet" href="/static/css/style.css"><link rel="stylesheet" href="/static/css/accounts.css"></head>
+<body class="account-page"><main class="account-shell account-shell-wide">
+  <nav class="account-nav"><a class="brand-logo" href="/"><span class="brand-icon">🌱</span><span>Smart AgriAssistant</span></a><div><a href="/farmer-dashboard">My farms</a><button class="btn btn-secondary btn-sm" data-logout>Sign out</button></div></nav>
+  <section class="card account-card"><span class="badge badge-primary">Your account</span><h1>Farmer profile</h1><p>Your contact and language details are visible only to your account.</p>
+    <form id="profileForm"><div class="account-form-grid">
+      <label class="form-label">Full name<input class="form-control" name="full_name" required></label>
+      <label class="form-label">Mobile number<input class="form-control" name="mobile" type="tel" required></label>
+      <label class="form-label">Email<input class="form-control" name="email" type="email"></label>
+      <label class="form-label">Preferred language<select class="form-control" name="preferred_language"><option>English</option><option>Gujarati</option><option>Hindi</option></select></label>
+      <label class="form-label">Address<input class="form-control" name="address"></label><label class="form-label">Village / City<input class="form-control" name="village"></label>
+      <label class="form-label">District<input class="form-control" name="district"></label><label class="form-label">State<input class="form-control" name="state"></label>
+      <label class="form-label">Pincode<input class="form-control" name="pincode"></label>
+    </div><p class="form-message" id="formMessage" role="status" aria-live="polite"></p><button class="btn btn-primary" type="submit">Save profile</button></form>
+  </section>
+</main><script src="/static/js/accounts.js"></script></body></html>

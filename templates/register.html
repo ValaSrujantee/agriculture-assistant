@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create Farmer Account | Smart Agriculture Assistant</title>
+  <link rel="stylesheet" href="/static/css/style.css"><link rel="stylesheet" href="/static/css/accounts.css">
+</head>
+<body class="account-page">
+  <main class="account-shell account-shell-wide">
+    <a class="brand-logo" href="/"><span class="brand-icon">🌱</span><span>Smart AgriAssistant</span></a>
+    <section class="card account-card">
+      <span class="badge badge-primary">Farmer account</span><h1>Create your account</h1>
+      <p>Your account keeps your farm profiles and assessments private.</p>
+      <form id="registerForm">
+        <div class="account-form-grid">
+          <label class="form-label">Full name<input class="form-control" name="full_name" autocomplete="name" maxlength="120" required></label>
+          <label class="form-label">Mobile number<input class="form-control" name="mobile" type="tel" autocomplete="tel" required></label>
+          <label class="form-label">Email <span>(optional)</span><input class="form-control" name="email" type="email" autocomplete="email"></label>
+          <label class="form-label">Preferred language<select class="form-control" name="preferred_language"><option>English</option><option>Gujarati</option><option>Hindi</option></select></label>
+          <label class="form-label">Password<input class="form-control" name="password" type="password" minlength="8" autocomplete="new-password" required></label>
+          <label class="form-label">Confirm password<input class="form-control" name="confirm_password" type="password" minlength="8" autocomplete="new-password" required></label>
+          <label class="form-label">Address <span>(optional)</span><input class="form-control" name="address" autocomplete="street-address"></label>
+          <label class="form-label">Village / City <span>(optional)</span><input class="form-control" name="village" autocomplete="address-level2"></label>
+          <label class="form-label">District <span>(optional)</span><input class="form-control" name="district"></label>
+          <label class="form-label">State <span>(optional)</span><input class="form-control" name="state" autocomplete="address-level1"></label>
+          <label class="form-label">Pincode <span>(optional)</span><input class="form-control" name="pincode" autocomplete="postal-code"></label>
+        </div>
+        <p class="form-message" id="formMessage" role="alert" aria-live="polite"></p>
+        <button class="btn btn-primary btn-lg" type="submit">Create account</button>
+      </form>
+      <p class="account-switch">Already registered? <a href="/login">Sign in</a></p>
+    </section>
+  </main>
+  <script src="/static/js/accounts.js"></script>
+</body>
+</html>

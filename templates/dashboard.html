@@ -28,6 +28,8 @@
       </ul>
       <div class="nav-actions">
         <button class="theme-toggle" id="themeToggleBtn" aria-label="Toggle Theme">🌙</button>
+        {% if farmer %}<a href="/farmer-dashboard" class="btn btn-secondary btn-sm">My farms</a><button class="btn btn-secondary btn-sm" data-logout>Sign out</button>
+        {% else %}<a href="/login" class="btn btn-secondary btn-sm">Farmer sign in</a><a href="/register" class="btn btn-primary btn-sm">Create account</a>{% endif %}
         <button class="btn btn-secondary btn-sm" id="printReportBtn">🖨 Print Report</button>
       </div>
     </div>
@@ -36,6 +38,7 @@
   <!-- Main Content Container -->
   <div class="container" style="padding-top: 2rem; padding-bottom: 4rem;">
     
+    {% if farmer %}<p class="farm-data-note">Welcome back, {{ farmer.full_name|e }}. <a href="/farmer-dashboard">Manage your farms and saved reports</a>.</p>{% endif %}
     <!-- Header Banner -->
     <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
       <div>
@@ -53,6 +56,41 @@
         </select>
       </div>
     </div>
+
+    <section class="card farm-data-panel" id="farm-data-collection" style="margin-bottom: 2rem;">
+      <div class="farm-data-heading"><div><span class="badge badge-primary">Farm data collection</span><h2>How would you like to provide your farm data?</h2>
+        <p>Enter measurements yourself, check a soil report, record a sensor reading, or request weather data. We show the source for each value.</p></div>
+        <div id="accountFarmPickerWrap" hidden><label class="form-label" for="accountFarmSelect">Selected farm</label><select class="form-control" id="accountFarmSelect"><option value="">Analyze without a saved farm</option></select></div>
+      </div>
+      {% if not farmer %}<p class="farm-data-note">You can use manual entry and demo farm presets now. <a href="/register">Create a free account</a> to save multiple farms, upload reports, and use account-linked sensor readings.</p>{% endif %}
+      <div class="farm-data-options">
+        <article class="farm-source-card"><h3>🧪 Upload Soil Test Report</h3><p>We will try to read N, P, K and pH. Check every value before using it.</p>
+          <label class="form-label" for="soilReportFile">PDF or photo (JPG, PNG)</label><input id="soilReportFile" class="form-control" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png">
+          <button class="btn btn-secondary btn-sm" type="button" id="uploadSoilReportBtn">Upload report</button><p class="farm-source-message" id="soilReportMessage" aria-live="polite"></p>
+        </article>
+        <article class="farm-source-card"><h3>📡 Soil Sensor / IoT</h3><p>Send a reading from a device, or use a clearly marked demonstration reading.</p>
+          <label class="form-label" for="sensorDeviceId">Device ID</label><input id="sensorDeviceId" class="form-control" value="SOIL-001" maxlength="80">
+          <div class="sensor-input-grid"><label class="form-label">Soil temperature (°C)<input id="sensorSoilTemp" class="form-control" type="number" min="-10" max="70" step="0.1"></label><label class="form-label">Soil moisture (%)<input id="sensorMoisture" class="form-control" type="number" min="0" max="100" step="0.1"></label><label class="form-label">Soil pH<input id="sensorPh" class="form-control" type="number" min="3" max="10" step="0.1"></label></div>
+          <div class="farm-source-actions"><button class="btn btn-secondary btn-sm" type="button" id="sendSensorBtn">Save sensor reading</button><button class="btn btn-secondary btn-sm" type="button" id="simulateSensorBtn">Simulate sensor reading</button></div><p class="farm-source-message" id="sensorMessage" aria-live="polite"></p>
+        </article>
+        <article class="farm-source-card"><h3>🌦 Automatic Weather Data</h3><p>Ask the configured weather provider for conditions near your farm.</p>
+          <label class="form-label" for="farmLocationInput">Farm location</label><input id="farmLocationInput" class="form-control" placeholder="Village, district, or town" maxlength="160">
+          <button class="btn btn-secondary btn-sm" type="button" id="loadWeatherBtn">Use my farm location</button><p class="farm-source-message" id="weatherMessage" aria-live="polite">Weather service needs a server-side API key. If unavailable, enter weather values manually.</p>
+          <small>Weather values are a current snapshot. Rainfall may cover only a short recent period; compare it with crop-season rainfall before analysis.</small>
+        </article>
+      </div>
+      <section class="report-review" id="soilReportReview" hidden aria-labelledby="soilReviewTitle">
+        <div><h3 id="soilReviewTitle">Verify Soil Values</h3><p>Detected values are editable. Missing values stay blank; enter them yourself if you have them.</p></div>
+        <div class="soil-review-grid"><label class="form-label">Nitrogen (kg/ha)<input class="form-control" id="reportN" type="number" min="0" max="250" step="any"></label>
+          <label class="form-label">Phosphorus (kg/ha)<input class="form-control" id="reportP" type="number" min="0" max="200" step="any"></label>
+          <label class="form-label">Potassium (kg/ha)<input class="form-control" id="reportK" type="number" min="0" max="250" step="any"></label>
+          <label class="form-label">Soil pH<input class="form-control" id="reportPh" type="number" min="3" max="10" step="0.1"></label></div>
+        <button class="btn btn-primary btn-sm" id="verifySoilValuesBtn" type="button">Verify Soil Values</button>
+      </section>
+      <div class="farm-readiness"><div><strong>Farm Data Ready</strong><span id="farmDataCompleteness">Enter the measurements below to check completeness.</span></div>
+        <button class="btn btn-secondary btn-sm" type="button" id="checkFarmDataBtn">Check data</button></div>
+      <div class="farm-source-table-wrap"><table class="farm-source-table"><thead><tr><th>Parameter</th><th>Value</th><th>Source</th></tr></thead><tbody id="farmDataSources"><tr><td colspan="3">No farm values entered yet.</td></tr></tbody></table></div>
+    </section>
 
     <!-- Input Form Card -->
     <div class="card" style="margin-bottom: 2.5rem;">
@@ -99,10 +137,14 @@
             <div class="form-group" style="margin-bottom: 0;">
               <label class="form-label" for="inputPh">
                 <span>Soil pH</span>
-                <span class="unit-badge">3.5 - 9.5 (Default: 6.5)</span>
+                <span class="unit-badge">3 - 10 pH · required</span>
               </label>
-              <input type="number" class="form-control" id="inputPh" placeholder="e.g. 6.5" min="3.5" max="9.5" step="0.1" value="6.5">
+              <input type="number" class="form-control" id="inputPh" placeholder="e.g. 6.5" min="3" max="10" step="0.1" required>
               <span class="form-range-hint">Controls nutrient solubility and microbial activity.</span>
+            </div>
+            <div class="sensor-input-grid manual-soil-extras">
+              <div class="form-group"><label class="form-label" for="inputSoilTemp">Soil temperature (°C) <span class="unit-badge">Optional</span></label><input type="number" class="form-control" id="inputSoilTemp" min="-10" max="70" step="0.1" placeholder="If known"><span class="form-range-hint">Optional context; the ML model uses air temperature.</span></div>
+              <div class="form-group"><label class="form-label" for="inputSoilMoisture">Soil moisture (%) <span class="unit-badge">Optional</span></label><input type="number" class="form-control" id="inputSoilMoisture" min="0" max="100" step="0.1" placeholder="If known"><span class="form-range-hint">Optional context; enter only if measured.</span></div>
             </div>
           </div>
 
@@ -115,27 +157,27 @@
             <div class="form-group">
               <label class="form-label" for="inputTemp">
                 <span>Ambient Temperature</span>
-                <span class="unit-badge">5.0 - 50.0 °C</span>
+                <span class="unit-badge">0 - 55 °C</span>
               </label>
-              <input type="number" class="form-control" id="inputTemp" placeholder="e.g. 24.5" min="5" max="50" step="0.1" required>
+              <input type="number" class="form-control" id="inputTemp" placeholder="e.g. 24.5" min="0" max="55" step="0.1" required>
               <span class="form-range-hint">Average daily growing season temperature.</span>
             </div>
 
             <div class="form-group">
               <label class="form-label" for="inputHumidity">
                 <span>Relative Humidity</span>
-                <span class="unit-badge">10 - 100 %</span>
+                <span class="unit-badge">5 - 100 %</span>
               </label>
-              <input type="number" class="form-control" id="inputHumidity" placeholder="e.g. 82.0" min="10" max="100" step="0.1" required>
+              <input type="number" class="form-control" id="inputHumidity" placeholder="e.g. 82.0" min="5" max="100" step="0.1" required>
               <span class="form-range-hint">Affects transpiration rate and fungal pest susceptibility.</span>
             </div>
 
             <div class="form-group">
               <label class="form-label" for="inputRainfall">
                 <span>Rainfall / Water Supply</span>
-                <span class="unit-badge">10 - 500 mm</span>
+                <span class="unit-badge">0 - 500 mm</span>
               </label>
-              <input type="number" class="form-control" id="inputRainfall" placeholder="e.g. 235.0" min="10" max="500" step="1" required>
+              <input type="number" class="form-control" id="inputRainfall" placeholder="e.g. 235.0" min="0" max="500" step="1" required>
               <span class="form-range-hint">Cumulative precipitation or expected irrigation volume.</span>
             </div>
 
@@ -429,6 +471,7 @@
   <script src="/static/js/main.js"></script>
   <script src="/static/js/charts.js"></script>
   <script src="/static/js/dashboard.js"></script>
+  <script src="/static/js/accounts.js"></script>
   <script src="/static/js/assistant.js"></script>
 </body>
 </html>

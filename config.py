@@ -3,7 +3,14 @@ Configuration module for Smart Agriculture Assistant.
 Defines paths, thresholds, season mappings, and server settings.
 """
 import os
+import secrets
 from pathlib import Path
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).resolve().parent / ".env")
+except ImportError:
+    pass
 
 # Base Paths
 BASE_DIR = Path(__file__).resolve().parent
@@ -28,13 +35,16 @@ LABEL_ENCODER_PATH = MODEL_DIR / "label_encoder.pkl"
 METADATA_PATH = MODEL_DIR / "model_metadata.json"
 
 # Server Configuration
-SECRET_KEY = os.getenv("SECRET_KEY", "smart-agri-secret-key-2026-secure")
+SECRET_KEY = os.getenv("SECRET_KEY") or secrets.token_hex(32)
 DEBUG = os.getenv("FLASK_DEBUG", "True").lower() in ["true", "1", "yes"]
+SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "false").lower() in ["true", "1", "yes"]
 PORT = int(os.getenv("PORT", 5000))
 HOST = os.getenv("HOST", "0.0.0.0")
 
 # Optional OpenWeatherMap API Key (graceful fallback if not set)
 WEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY", "")
+SOIL_REPORT_UPLOAD_DIR = DATA_DIR / "soil_reports"
+SOIL_REPORT_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 # Input Validations & Agronomic Value Ranges
 FEATURE_RANGES = {

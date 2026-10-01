@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Farms | Smart Agriculture Assistant</title><link rel="stylesheet" href="/static/css/style.css"><link rel="stylesheet" href="/static/css/accounts.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script></head>
+<body class="account-page account-app">
+  <header class="account-topbar"><nav class="account-nav"><a class="brand-logo" href="/"><span class="brand-icon">🌱</span><span>Smart AgriAssistant</span></a>
+    <div><a href="/farmer-dashboard" class="active">My farms</a><a href="/profile">Profile</a><a href="/dashboard">Farm analysis</a><button class="btn btn-secondary btn-sm" data-logout>Sign out</button></div></nav></header>
+  <main class="container account-content" data-farmer-id="{{ farmer.id }}">
+    <section class="account-welcome"><div><span class="badge badge-primary">Farmer dashboard</span><h1>Welcome, {{ farmer.full_name|e }} 👋</h1><p>Manage your farm profiles and review the data saved to your account.</p></div><a class="btn btn-primary" href="/dashboard">🌱 Analyze a farm</a></section>
+    <div class="account-summary-grid">
+      <a class="card summary-tile" href="/profile"><span>👨‍🌾</span><div><strong>Farmer profile</strong><small>{{ farmer.village or farmer.district or 'Add your location in profile' }}</small></div></a>
+      <a class="card summary-tile" href="#farms"><span>🌱</span><div><strong>My farms</strong><small>Farm details and crop cycle</small></div></a>
+      <a class="card summary-tile" href="/history"><span>📋</span><div><strong>Assessments</strong><small>Private to your account</small></div></a>
+    </div>
+    <section class="account-section" id="farms"><div class="account-section-heading"><div><h2>My farms</h2><p>Add one profile for each field or farm you manage.</p></div><button class="btn btn-primary" id="newFarmBtn">＋ Add a farm</button></div>
+      <div class="farm-list" id="farmList" aria-live="polite"><div class="card empty-state">Loading your farms…</div></div>
+    </section>
+    <section class="account-section"><div class="account-section-heading"><div><h2>Saved soil reports</h2><p>Uploaded reports stay in your account so older tests remain available.</p></div><a class="btn btn-secondary" href="/dashboard#farm-data-collection">Upload a report</a></div>
+      <div class="report-list" id="reportList"><div class="card empty-state">Loading reports…</div></div>
+    </section>
+    <section class="account-section"><div class="account-section-heading"><div><h2>Soil health trend</h2><p>Shows recorded assessments for a selected farm.</p></div><select class="form-control trend-select" id="trendFarmSelect" aria-label="Choose a farm for soil trend"><option value="">Choose a farm</option></select></div>
+      <div class="card chart-card"><canvas id="soilTrendChart" aria-label="Soil nutrient readings over time"></canvas><p id="trendEmpty" class="empty-state">Complete more than one assessment to build a soil history.</p></div>
+    </section>
+    <section class="account-section"><div class="account-section-heading"><div><h2>Farm alerts</h2><p>Future reminders and warnings will be based on verified farm and weather information.</p></div></div><div class="card notice-card">No alerts are available yet. Analysis warnings will be shown with each farm assessment.</div></section>
+    <div class="modal-backdrop" id="farmModal" hidden><section class="card farm-modal" role="dialog" aria-modal="true" aria-labelledby="farmModalTitle">
+      <button class="modal-close" id="closeFarmModal" type="button" aria-label="Close">×</button><h2 id="farmModalTitle">Add a farm</h2>
+      <form id="farmForm"><input type="hidden" name="id"><div class="account-form-grid">
+        <label class="form-label">Farm name<input class="form-control" name="name" required maxlength="100"></label>
+        <label class="form-label">Location<input class="form-control" name="location" placeholder="Optional address or area"></label>
+        <label class="form-label">Village / City<input class="form-control" name="village"></label><label class="form-label">District<input class="form-control" name="district"></label>
+        <label class="form-label">State<input class="form-control" name="state"></label><label class="form-label">Pincode<input class="form-control" name="pincode"></label>
+        <label class="form-label">Approximate size<input class="form-control" name="size" type="number" min="0.01" step="any"></label>
+        <label class="form-label">Size unit<select class="form-control" name="size_unit"><option value="">Choose unit</option><option value="acre">Acres</option><option value="hectare">Hectares</option></select></label>
+        <label class="form-label">Farming type<select class="form-control" name="farming_type"><option value="">Choose type</option><option>Crop Farming</option><option>Horticulture</option><option>Plantation</option><option>Mixed Farming</option><option>Other</option></select></label>
+        <label class="form-label">Irrigation source<select class="form-control" name="irrigation_source"><option value="">Choose source</option><option>Borewell</option><option>Canal</option><option>River</option><option>Rainfed</option><option>Drip Irrigation</option><option>Sprinkler</option><option>Other</option></select></label>
+        <label class="form-label">Current crop<input class="form-control" name="current_crop"></label><label class="form-label">Soil type (optional)<input class="form-control" name="soil_type"></label>
+        <label class="form-label">Sowing date (optional)<input class="form-control" name="sowing_date" type="date"></label><label class="form-label">Expected harvest (optional)<input class="form-control" name="expected_harvest_date" type="date"></label>
+        <label class="form-label">Previous crop (optional)<input class="form-control" name="previous_crop"></label>
+      </div><p class="form-message" id="farmFormMessage" role="alert"></p><div class="modal-actions"><button class="btn btn-secondary" id="cancelFarmBtn" type="button">Cancel</button><button class="btn btn-primary" type="submit">Save farm</button></div></form>
+    </section></div>
+  </main><script src="/static/js/accounts.js"></script></body></html>

@@ -188,7 +188,7 @@ Run the complete test suite with `pytest`:
 pytest tests/ -v
 ```
 
-All 16 tests covering model loading, prediction ranking, rule validations, knowledge retrieval, and REST API routes will execute.
+The test suite covers model loading, prediction ranking, rule validations, knowledge retrieval, account access, farm isolation, data validation, and REST API routes.
 
 ---
 
@@ -208,6 +208,64 @@ All 16 tests covering model loading, prediction ranking, rule validations, knowl
 | `GET` | `/api/model-info` | ML model metadata, accuracy, and feature importances |
 
 ---
+
+## 👩‍🌾 Farmer Accounts, Farms & Data Collection
+
+The account area adds farmer registration and sign-in, an editable profile, and private farm profiles. Saved assessments are associated with the signed-in farmer and optional selected farm. Guests can still use the existing public analysis page and demo farms; guest history remains separate from account assessments.
+
+Farmers can enter measurements manually, upload a soil report for best-effort extraction, submit a real sensor reading, or deliberately request a simulated demo reading. Extracted N, P, K, and pH values remain editable and must be verified before they are copied into the analysis form. Unsupported report units and unreadable image/PDF content remain blank for manual entry. Image OCR uses `pytesseract` plus the system Tesseract executable; when OCR is unavailable, the app asks the farmer to enter values. PDF text extraction uses `pypdf`.
+
+Weather support uses a server-side OpenWeather provider. Copy `.env.example` to `.env`, set a strong `SECRET_KEY`, and add `OPENWEATHER_API_KEY` to enable it. Without a key, the API returns the manual-entry fallback. The current-conditions endpoint returns a short-window rainfall reading where available; compare it with crop-season rainfall before relying on it for a crop recommendation. Provider keys are never sent to browser code. Farm locations are saved only when the farmer supplies them.
+
+### Added Pages
+
+- `/register` and `/login` — create an account or sign in with mobile/email and password.
+- `/farmer-dashboard` — private farm management, saved reports, and soil history trend.
+- `/profile` — edit farmer contact and language preferences.
+- `/dashboard` — existing analysis dashboard with farm data collection and source indicators. The public/demo analysis remains available without signing in; report upload, sensor history, farms, and private history require sign-in.
+
+### Added APIs
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `POST` | `/api/auth/register` | Create an account and sign in |
+| `POST` | `/api/auth/login` | Sign in with mobile number or email |
+| `POST` | `/api/auth/logout` | Clear the session |
+| `GET` | `/api/auth/me` | Return the signed-in farmer's public profile fields |
+| `GET`, `PUT` | `/api/profile` | Read or update the current farmer's profile |
+| `GET`, `POST` | `/api/farms` | List or add the current farmer's farms |
+| `GET`, `PUT`, `DELETE` | `/api/farms/<id>` | Read, edit, or delete an owned farm |
+| `GET` | `/api/farms/<id>/soil-trend` | Return that farm's soil measurements from owned assessments |
+| `POST` | `/api/farm-data/validate` | Check completeness, ranges, and sources before analysis |
+| `GET` | `/api/farm-data/status` | List the signed-in farmer's farms and soil reports |
+| `POST` | `/api/soil-report/upload` | Save a PDF/photo report and attempt N-P-K-pH extraction |
+| `GET` | `/api/soil-reports` | List the signed-in farmer's saved reports |
+| `POST` | `/api/soil-reports/<id>/verify` | Save farmer-reviewed soil report values |
+| `POST` | `/api/sensor-data` | Validate and save a device sensor reading |
+| `POST` | `/api/sensor-data/simulate` | Create an explicitly labelled demo reading |
+| `POST` | `/api/weather-data` | Request current conditions using the configured provider |
+
+### Database and Privacy
+
+The existing `farm_history` table is extended additively with nullable farmer/farm ownership and data-source metadata, preserving existing history rows as unowned demo history. New `farmers`, `farms`, `soil_reports`, and `sensor_readings` tables hold account data; passwords use Werkzeug's password hash helpers. Account APIs scope farm, report, sensor, and history queries to the authenticated farmer. The SQLite database and uploaded report files remain local application data and are excluded from Git where configured.
+
+For local HTTP development, keep `SESSION_COOKIE_SECURE=false`. Set it to `true` when serving over HTTPS. Choose and preserve a stable random secret in `.env`; do not commit `.env`.
+
+### Added Dependencies and OCR Setup
+
+`python-dotenv` loads the optional local `.env`; `pypdf`, Pillow, and `pytesseract` enable PDF text extraction and optional image OCR. Image OCR additionally needs the Tesseract executable installed on the host. If it is missing or the report is scanned but unreadable, the app leaves values undetected instead of guessing.
+
+After installing requirements, run the app as before:
+
+```bash
+python app.py
+```
+
+Run all existing and added tests with:
+
+```bash
+pytest tests/ -v
+```
 
 ## ⚠️ Agronomic Disclaimer
 
